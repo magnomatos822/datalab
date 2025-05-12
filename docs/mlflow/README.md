@@ -4,6 +4,8 @@
 
 MLflow é uma plataforma de código aberto para gerenciar o ciclo de vida completo de machine learning. No DataFlow Lab, o MLflow é utilizado para rastrear experimentos, gerenciar modelos e facilitar a implementação de modelos de machine learning.
 
+Última atualização: **12 de maio de 2025**
+
 ## Componentes do MLflow
 
 O MLflow no DataFlow Lab inclui os seguintes componentes principais:
@@ -12,17 +14,19 @@ O MLflow no DataFlow Lab inclui os seguintes componentes principais:
 2. **MLflow Projects**: Empacota código em formato reproduzível
 3. **MLflow Models**: Gerencia e implanta modelos em diversos ambientes
 4. **MLflow Registry**: Gerencia o ciclo de vida completo do modelo
+5. **MLflow Pipelines**: Implementa fluxos de trabalho padronizados para ML (novo)
 
 ## Acessando o MLflow
 
 - **UI**: [http://localhost:5000](http://localhost:5000)
 - **API Python**: Disponível através da biblioteca `mlflow`
+- **API REST**: Disponível em [http://localhost:5000/api](http://localhost:5000/api)
 
 ## Configuração no DataFlow Lab
 
 O MLflow está configurado para armazenar:
 
-- **Metadados**: Em um banco de dados SQLite local
+- **Metadados**: Em um banco de dados SQLite local (`/data/mlflow/mlflow.db`)
 - **Artefatos**: No MinIO (bucket `mlflow`)
 
 ## Registrando Experimentos com MLflow
@@ -180,6 +184,55 @@ def pipeline_treinamento(params):
     return metrics
 ```
 
+## MLflow Pipelines (Novo)
+
+MLflow Pipelines é um novo recurso que fornece estruturas padronizadas para fluxos de trabalho comuns de ML:
+
+```python
+from mlflow.pipelines import Pipeline
+
+# Definir pipeline de classificação
+pipeline = Pipeline(
+    pipeline_name="classificacao_clientes",
+    target_col="churn",
+    primary_metric="f1_score"
+)
+
+# Executar etapas do pipeline
+pipeline.run("ingest")
+pipeline.run("split")
+pipeline.run("transform")
+pipeline.run("train")
+pipeline.run("evaluate")
+pipeline.run("register")
+```
+
+## Monitoramento de Modelos
+
+Para monitorar modelos em produção, o MLflow pode ser configurado com:
+
+```python
+import mlflow.pyfunc
+import pandas as pd
+
+# Carregar modelo em produção
+modelo = mlflow.pyfunc.load_model("models:/modelo_producao/Production")
+
+# Monitorar entrada e saída
+def predict_with_monitoring(data):
+    # Registrar métricas de entrada
+    mlflow.log_metric("input_volume", len(data))
+    
+    # Fazer previsão
+    predictions = modelo.predict(data)
+    
+    # Registrar estatísticas da saída
+    mlflow.log_metric("prediction_mean", predictions.mean())
+    mlflow.log_metric("prediction_std", predictions.std())
+    
+    return predictions
+```
+
 ## Comparando Experimentos
 
 O MLflow permite comparar visualmente diferentes experimentos:
@@ -197,14 +250,54 @@ O MLflow permite comparar visualmente diferentes experimentos:
 4. **Salve artefatos importantes**: Como visualizações, matrizes de confusão, etc.
 5. **Use tags**: Para organizar experimentos
 6. **Documente modelos**: Adicione descrições aos modelos registrados
+7. **Controle de versão**: Mantenha o código-fonte versionado junto com os experimentos
+8. **Automação**: Integre o MLflow em pipelines automatizados com Prefect
+
+## Integração com Delta Lake
+
+O MLflow se integra perfeitamente com Delta Lake:
+
+```python
+# Treinar com dados do Delta Lake
+training_data = spark.read.format("delta").load("s3a://silver/training_data")
+
+# Treinar modelo e registrar
+with mlflow.start_run():
+    # Treinar modelo
+    model = train_model(training_data)
+    
+    # Registrar localização dos dados de treinamento
+    mlflow.log_param("training_data_path", "s3a://silver/training_data")
+    mlflow.log_param("training_data_version", delta_table.history(1).select("version").collect()[0][0])
+    
+    # Registrar modelo
+    mlflow.sklearn.log_model(model, "model")
+```
 
 ## Troubleshooting
 
 Problemas comuns e soluções:
 
 1. **Erro de conexão**: Verifique se o servidor MLflow está em execução
+   ```bash
+   docker ps | grep mlflow
+   ```
+
 2. **Erro ao salvar artefatos**: Verifique as credenciais do MinIO
+   ```bash
+   docker-compose logs mlflow
+   ```
+
 3. **Modelos não aparecem no Registry**: Verifique se o registro foi bem-sucedido
+   ```python
+   client = MlflowClient()
+   client.list_registered_models()
+   ```
+
+4. **Problemas com o SQLite**: Se o banco de dados estiver corrompido, restaure de um backup
+   ```bash
+   cp /data/mlflow/mlflow.db.bak /data/mlflow/mlflow.db
+   ```
 
 ## Referências
 
@@ -212,3 +305,5 @@ Problemas comuns e soluções:
 - [MLflow Tracking](https://mlflow.org/docs/latest/tracking.html)
 - [MLflow Models](https://mlflow.org/docs/latest/models.html)
 - [MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)
+- [MLflow Pipelines](https://mlflow.org/docs/latest/pipelines.html)
+- [MLflow com Delta Lake](https://docs.databricks.com/delta/delta-intro.html)

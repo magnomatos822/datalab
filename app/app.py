@@ -192,7 +192,7 @@ if page == "Visão Geral":
         color = "green" if val == "Sucesso" else "red"
         return f"background-color: {color}; color: white"
 
-    styled_df = pipelines_df.style.applymap(color_status, subset=["status"])
+    styled_df = pipelines_df.style.map(color_status, subset=["status"])
 
     st.dataframe(styled_df, use_container_width=True)
 

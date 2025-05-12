@@ -41,7 +41,7 @@
 
 O DataFlow Lab é uma plataforma completa de Data Lakehouse para processamento de dados, abrangendo desde a ingestão de dados brutos até a criação de modelos de machine learning. A arquitetura implementa práticas modernas de engenharia de dados como processamento em camadas (Medallion: Bronze, Silver, Gold), transações ACID através do Delta Lake, rastreabilidade e reprodutibilidade.
 
-Atualizado em: **11 de maio de 2025**
+Atualizado em: **12 de maio de 2025**
 
 ## 🏗️ Arquitetura
 

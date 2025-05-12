@@ -1,8 +1,13 @@
+import os
+import sys
+
 c = get_config()
 
 # Configuração básica do JupyterHub
 c.JupyterHub.ip = "0.0.0.0"
-c.JupyterHub.port = 8888
+c.JupyterHub.port = (
+    8000  # Alterando para 8000 para corresponder à porta interna no Docker
+)
 c.JupyterHub.admin_access = True
 
 # Autenticador simples para desenvolvimento
@@ -17,8 +22,17 @@ c.Authenticator.admin_users = {"admin"}
 c.JupyterHub.spawner_class = "jupyterhub.spawner.SimpleLocalProcessSpawner"
 
 # Configurar caminhos do usuário
-c.Spawner.notebook_dir = "/home/jovyan/notebooks"
+c.Spawner.notebook_dir = (
+    "/home/jovyan/work"  # Corrigindo para corresponder ao volume montado
+)
 c.Spawner.default_url = "/lab"
+
+# Configurações de debug para ajudar na solução de problemas
+c.JupyterHub.log_level = "DEBUG"
+c.Spawner.debug = True
+
+# Aumentar o tempo limite de inicialização do notebook
+c.Spawner.start_timeout = 120
 
 
 # Configurar volumes persistentes

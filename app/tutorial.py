@@ -36,7 +36,6 @@ with tab1:
     - **MinIO**: Armazenamento compatível com S3
     - **MLflow**: Gerenciamento do ciclo de vida de ML
     - **Prefect**: Orquestração de fluxos de dados
-    - **Airbyte**: Integração de dados
     - **JupyterHub**: Ambiente de desenvolvimento
     - **Streamlit**: Visualização de dados
     """
@@ -64,7 +63,6 @@ with tab1:
             "MLflow": "http://localhost:5000",
             "Prefect": "http://localhost:4200",
             "JupyterHub": "http://localhost:8888",
-            "Airbyte": "http://localhost:8000",
         }
 
         for service, url in services.items():
@@ -511,16 +509,12 @@ with tab4:
        - Use a classe `MedallionArchitecture` em `app/medallion_architecture.py`
        - Orquestre com Prefect usando o `app/medallion_prefect_flow.py`
     
-    3. **Integre Fontes de Dados com Airbyte**:
-       - Configure conectores para suas fontes de dados
-       - Direcione para a camada Bronze
-    
-    4. **Desenvolva Modelos de ML**:
+    3. **Desenvolva Modelos de ML**:
        - Use dados da camada Gold para features
        - Rastreie experimentos com MLflow
        - Implemente modelos em produção
     
-    5. **Crie Dashboards com Streamlit**:
+    4. **Crie Dashboards com Streamlit**:
        - Visualize dados da camada Gold
        - Compartilhe insights com sua equipe
     """

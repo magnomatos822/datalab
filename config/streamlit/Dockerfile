@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -9,7 +9,13 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+
+# Instala setuptools explicitamente antes de instalar os requisitos
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Adiciona o diretório /.local/bin ao PATH
+ENV PATH="/.local/bin:${PATH}"
 
 EXPOSE 8501
 
