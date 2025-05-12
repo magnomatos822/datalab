@@ -31,13 +31,6 @@
   - [🚀 Início Rápido](#-início-rápido)
     - [Pré-requisitos](#pré-requisitos)
     - [Instalação](#instalação)
-    - [URLs dos Serviços](#urls-dos-serviços)
-  - [📊 Uso do Sistema](#-uso-do-sistema)
-    - [Arquitetura Medallion](#arquitetura-medallion)
-    - [Transações ACID com Delta Lake](#transações-acid-com-delta-lake)
-    - [Fluxo de Dados Típico](#fluxo-de-dados-típico)
-    - [Casos de Uso](#casos-de-uso)
-    - [Exemplos Práticos](#exemplos-práticos)
   - [📂 Estrutura do Projeto](#-estrutura-do-projeto)
   - [🔄 Integração com Airbyte](#-integração-com-airbyte)
   - [📈 Analytics com Spark](#-analytics-com-spark)
@@ -151,6 +144,13 @@ O sistema é composto por vários componentes integrados que formam uma platafor
 
 3. Verifique se todos os serviços estão rodando:
    ```bash
+   docker-compose ps
+   ```
+
+   Para verificar os logs de um serviço específico (por exemplo, Spark):
+   ```bash
+   docker-compose logs spark-master
+   ```
    docker-compose ps
    ```
 

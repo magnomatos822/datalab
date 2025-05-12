@@ -65,7 +65,7 @@ services:
 
   # MLflow
   mlflow:
-    image: python:3.10-slim
+    image: bitnami/mlflow
     container_name: mlflow
     ports:
       - "5000:5000"
@@ -116,8 +116,8 @@ services:
   # Streamlit
   streamlit:
     build:
-      context: .
-      dockerfile: ./config/streamlit/Dockerfile
+      context: ./config/streamlit
+      dockerfile: Dockerfile
     container_name: streamlit
     ports:
       - "8501:8501"
@@ -128,13 +128,13 @@ services:
 
   # Airbyte - Usando componentes separados
   airbyte-server:
-    image: airbyte/server:latest
+    image: airbyte/server:build-f2df1414f1-22031-master
     container_name: airbyte-server
     restart: unless-stopped
     ports:
       - "8001:8001"
     environment:
-      - AIRBYTE_VERSION=latest
+      - AIRBYTE_VERSION=build-f2df1414f1-22031-master
       - AIRBYTE_API_HOST=airbyte-server:8001
       - DATABASE_USER=airbyte
       - DATABASE_PASSWORD=password
@@ -150,7 +150,7 @@ services:
       - dataflow-network
 
   airbyte-webapp:
-    image: airbyte/webapp:latest
+    image: airbyte/webapp:build-f2df1414f1-22031-master
     container_name: airbyte-webapp
     restart: unless-stopped
     ports:
