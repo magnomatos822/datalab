@@ -22,7 +22,7 @@ c.Authenticator.admin_users = {"admin"}
 c.JupyterHub.spawner_class = "jupyterhub.spawner.SimpleLocalProcessSpawner"
 
 # Permitir execução como root (solução para o erro de inicialização)
-c.Spawner.args = ['--allow-root']
+c.Spawner.args = ["--allow-root"]
 
 # Configurar caminhos do usuário
 c.Spawner.notebook_dir = (
