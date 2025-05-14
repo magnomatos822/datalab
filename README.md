@@ -11,6 +11,7 @@
   <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
   <img src="https://img.shields.io/badge/Airflow-017C74?style=for-the-badge&logo=apache-airflow&logoColor=white" alt="Apache Airflow">
   <img src="https://img.shields.io/badge/Airbyte-FF4B4B?style=for-the-badge&logo=airbyte&logoColor=white" alt="Airbyte">
+  <img src="https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" alt="Apache Kafka">
 </div>
 
 <br>

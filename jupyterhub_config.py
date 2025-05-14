@@ -21,6 +21,9 @@ c.Authenticator.admin_users = {"admin"}
 # Configurar o inicializador do notebook
 c.JupyterHub.spawner_class = "jupyterhub.spawner.SimpleLocalProcessSpawner"
 
+# Permitir execução como root (solução para o erro de inicialização)
+c.Spawner.args = ['--allow-root']
+
 # Configurar caminhos do usuário
 c.Spawner.notebook_dir = (
     "/home/jovyan/work"  # Corrigindo para corresponder ao volume montado
