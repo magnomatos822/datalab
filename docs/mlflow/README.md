@@ -186,11 +186,11 @@ with mlflow.start_run() as run:
 
 O MLflow no DataLab está configurado com as seguintes variáveis:
 
-| Variável                | Valor                   | Descrição                              |
-|-------------------------|-------------------------|----------------------------------------|
-| MLFLOW_S3_ENDPOINT_URL  | http://minio:9000       | Endpoint MinIO para artefatos         |
-| AWS_ACCESS_KEY_ID       | ${AWS_ACCESS_KEY_ID}    | Credencial de acesso ao MinIO         |
-| AWS_SECRET_ACCESS_KEY   | ${AWS_SECRET_ACCESS_KEY}| Chave secreta de acesso ao MinIO      |
+| Variável               | Valor                    | Descrição                        |
+| ---------------------- | ------------------------ | -------------------------------- |
+| MLFLOW_S3_ENDPOINT_URL | http://minio:9000        | Endpoint MinIO para artefatos    |
+| AWS_ACCESS_KEY_ID      | ${AWS_ACCESS_KEY_ID}     | Credencial de acesso ao MinIO    |
+| AWS_SECRET_ACCESS_KEY  | ${AWS_SECRET_ACCESS_KEY} | Chave secreta de acesso ao MinIO |
 
 ## Melhores Práticas
 
@@ -215,9 +215,9 @@ O MLflow no DataLab está configurado com as seguintes variáveis:
 
 ## Resolução de Problemas
 
-| Problema | Solução |
-|----------|--------|
-| O MLflow não está acessível | Verifique se o contêiner está rodando: `docker-compose ps mlflow` |
-| Erro de autenticação no MinIO | Verifique as credenciais AWS no arquivo `.env` |
-| Erros de permissão | O MLflow roda como root, verifique permissões dos volumes |
-| Modelo muito grande | Configure variável `MLFLOW_ARTIFACT_UPLOAD_DOWNLOAD_CHUNK_SIZE` |
+| Problema                      | Solução                                                           |
+| ----------------------------- | ----------------------------------------------------------------- |
+| O MLflow não está acessível   | Verifique se o contêiner está rodando: `docker-compose ps mlflow` |
+| Erro de autenticação no MinIO | Verifique as credenciais AWS no arquivo `.env`                    |
+| Erros de permissão            | O MLflow roda como root, verifique permissões dos volumes         |
+| Modelo muito grande           | Configure variável `MLFLOW_ARTIFACT_UPLOAD_DOWNLOAD_CHUNK_SIZE`   |

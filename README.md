@@ -2,397 +2,419 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Apache_Spark-E25A1C?style=for-the-badge&logo=apache-spark&logoColor=white" alt="Apache Spark">
-  <img src="https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=mlflow&logoColor=white" alt="MLflow">
-  <img src="https://img.shields.io/badge/Prefect-024DFD?style=for-the-badge&logo=prefect&logoColor=white" alt="Prefect">
-  <img src="https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white" alt="Jupyter">
-  <img src="https://img.shields.io/badge/MinIO-C72E49?style=for-the-badge&logo=minio&logoColor=white" alt="MinIO">
   <img src="https://img.shields.io/badge/Delta_Lake-00ADD8?style=for-the-badge&logo=delta&logoColor=white" alt="Delta Lake">
-  <img src="https://img.shields.io/static/v1?style=for-the-badge&message=Apache+NiFi&color=728E9B&logo=Apache+NiFi&logoColor=FFFFFF&label=" alt="Apache NiFi">
+  <img src="https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=mlflow&logoColor=white" alt="MLflow">
+  <img src="https://img.shields.io/badge/MinIO-C72E49?style=for-the-badge&logo=minio&logoColor=white" alt="MinIO">
+  <img src="https://img.shields.io/badge/Prefect-2EBDFA?style=for-the-badge&logo=prefect&logoColor=white" alt="Prefect">
   <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
-  <img src="https://img.shields.io/badge/Airflow-017C74?style=for-the-badge&logo=apache-airflow&logoColor=white" alt="Apache Airflow">
+  <img src="https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white" alt="JupyterHub">
   <img src="https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" alt="Apache Kafka">
+  <img src="https://img.shields.io/static/v1?style=for-the-badge&message=Apache+NiFi&color=728E9B&logo=Apache+NiFi&logoColor=FFFFFF&label=" alt="Apache NiFi">
 </div>
 
-<br>
+> Última atualização: 14 de maio de 2025
 
-> Arquitetura moderna de Data Lakehouse com pipeline de dados para engenharia de dados e machine learning — processamento em camadas (Bronze, Silver, Gold), garantias ACID, time travel, monitoramento e orquestração.
+## 🔍 Visão Geral
 
-## 📋 Sumário
+DataFlow Lab é um ambiente completo de desenvolvimento para engenharia de dados, ciência de dados e MLOps que integra as melhores ferramentas open source em uma única plataforma. O projeto implementa a arquitetura Medallion (Bronze, Silver, Gold) oferecendo um ambiente completo para processamento de dados em larga escala.
 
-- [DataFlow Lab](#dataflow-lab)
-  - [📋 Sumário](#-sumário)
-  - [🔭 Visão Geral](#-visão-geral)
-  - [🏗️ Arquitetura](#️-arquitetura)
-  - [🧩 Componentes](#-componentes)
-    - [Armazenamento de Dados](#armazenamento-de-dados)
-    - [Ingestão e ETL](#ingestão-e-etl)
-    - [Processamento de Dados](#processamento-de-dados)
-    - [Machine Learning](#machine-learning)
-    - [Orquestração](#orquestração)
-    - [Desenvolvimento](#desenvolvimento)
-    - [Visualização](#visualização)
-  - [🚀 Início Rápido](#-início-rápido)
-    - [Pré-requisitos](#pré-requisitos)
-    - [Instalação](#instalação)
-    - [URLs dos Serviços](#urls-dos-serviços)
-  - [📂 Estrutura do Projeto](#-estrutura-do-projeto)
-  - [📊 Uso do Sistema](#-uso-do-sistema)
-    - [Arquitetura Medallion](#arquitetura-medallion)
-    - [Transações ACID com Delta Lake](#transações-acid-com-delta-lake)
-    - [Fluxo de Dados Típico](#fluxo-de-dados-típico)
-    - [Casos de Uso](#casos-de-uso)
-    - [Exemplos Práticos](#exemplos-práticos)
-  - [🔄 Integração com Apache NiFi](#-integração-com-apache-nifi)
-  - [📈 Analytics com Spark e Kafka](#-analytics-com-spark-e-kafka)
-  - [👥 Contribuição](#-contribuição)
-  - [📄 Licença](#-licença)
+## ✨ Características Principais
 
-## 🔭 Visão Geral
+- **Arquitetura Medallion**: Implementação completa das camadas Bronze, Silver e Gold
+- **Processamento Distribuído**: Apache Spark para processamento em larga escala
+- **Armazenamento Resiliente**: Delta Lake para gerenciamento de dados confiável
+- **Machine Learning**: MLflow para tracking, registro e deployment de modelos
+- **Orquestração**: Prefect para orquestração de fluxos de dados
+- **Ingestão de Dados**: Apache NiFi para automatizar a ingestão de várias fontes
+- **Streaming**: Apache Kafka para processamento de streaming em tempo real
+- **Visualização**: Streamlit para dashboards e aplicações de dados interativas
+- **Ambiente de Desenvolvimento**: JupyterHub para colaboração e experimentação
 
-O DataFlow Lab é uma plataforma completa de Data Lakehouse para processamento de dados, abrangendo desde a ingestão de dados brutos até a criação de modelos de machine learning. A arquitetura implementa práticas modernas de engenharia de dados como processamento em camadas (Medallion: Bronze, Silver, Gold), transações ACID através do Delta Lake, rastreabilidade e reprodutibilidade.
+## 📋 Componentes
 
-Atualizado em: **14 de maio de 2025**
+| Componente       | Versão                       | Porta       | Descrição                              | Documentação                               |
+| ---------------- | ---------------------------- | ----------- | -------------------------------------- | ------------------------------------------ |
+| **Apache Spark** | 3.5.1                        | 8080, 7077  | Processamento distribuído de dados     | [Documentação](/docs/spark/README.md)      |
+| **Delta Lake**   | 3.3.1                        | -           | Camada de armazenamento para lakehouse | [Documentação](/docs/spark/README.md)      |
+| **MLflow**       | 2.22.0                       | 5000        | Plataforma de MLOps                    | [Documentação](/docs/mlflow/README.md)     |
+| **MinIO**        | RELEASE.2025-04-22T22-12-26Z | 9000, 9001  | Armazenamento de objetos S3            | [Documentação](/docs/minio/README.md)      |
+| **Prefect**      | 3.4.1                        | 4200        | Orquestração de fluxos                 | [Documentação](/docs/prefect/README.md)    |
+| **Streamlit**    | 1.45.0                       | 8501        | Dashboards interativos                 | [Documentação](/docs/streamlit/README.md)  |
+| **JupyterHub**   | 4.0.2                        | 8000        | Ambiente de desenvolvimento            | [Documentação](/docs/jupyterhub/README.md) |
+| **Apache Kafka** | 7.5.0                        | 9092, 29092 | Streaming de eventos                   | [Documentação](/docs/kafka/README.md)      |
+| **Apache NiFi**  | 2.4.0                        | 8443        | Automação de fluxo de dados            | [Documentação](/docs/nifi/README.md)       |
 
 ## 🏗️ Arquitetura
 
-<pre>
-┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌────────────┐
-│          │     │          │     │          │     │          │     │            │
-│   RAW    │────▶│  BRONZE  │────▶│  SILVER  │────▶│   GOLD   │────▶│  ML MODELS │
-│   DATA   │     │  LAYER   │     │  LAYER   │     │  LAYER   │     │            │
-│          │     │          │     │          │     │          │     │            │
-└──────────┘     └──────────┘     └──────────┘     └──────────┘     └────────────┘
-      │                │                │                │                 │
-      │                │                │                │                 │
-      ▼                ▼                ▼                ▼                 ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│                          ACID TRANSACTIONS (Delta Lake)                      │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-      │                │                │                │                 │
-      │                │                │                │                 │
-      ▼                ▼                ▼                ▼                 ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│                         STREAMING (Kafka/Spark)                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-      │                │                │                │                 │
-      │                │                │                │                 │
-      ▼                ▼                ▼                ▼                 ▼
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│                          WORKFLOW ORCHESTRATION                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-</pre>
+A arquitetura do DataFlow Lab é baseada no padrão Medallion (Lakehouse), organizada em três camadas principais:
 
-## 🧩 Componentes
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          CAMADA DE INGESTÃO                         │
+│                                                                     │
+│  ┌──────────┐    ┌───────────┐    ┌────────┐    ┌────────────────┐  │
+│  │  Apache  │    │  Apache   │    │  APIs/ │    │     Outros     │  │
+│  │   NiFi   │    │   Kafka   │    │  REST  │    │    Coletores   │  │
+│  └────┬─────┘    └─────┬─────┘    └───┬────┘    └────────┬───────┘  │
+│       │                │               │                 │          │
+└───────┼────────────────┼───────────────┼─────────────────┼──────────┘
+        │                │               │                 │
+        ▼                ▼               ▼                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   ┌─────────────────────────┐                       │
+│                   │       BRONZE LAYER      │                       │
+│                   │    (Dados Brutos em     │                       │
+│                   │     Formato Delta)      │                       │
+│                   └────────────┬────────────┘                       │
+│                                │                                    │
+│                   ┌────────────▼────────────┐                       │
+│                   │       SILVER LAYER      │                       │
+│                   │   (Dados Limpos com     │                       │
+│                   │  Qualidade Garantida)   │                       │
+│                   └────────────┬────────────┘                       │
+│                                │                                    │
+│                   ┌────────────▼────────────┐                       │
+│                   │        GOLD LAYER       │                       │
+│                   │  (Dados Agregados para  │                       │
+│                   │        Consumo)         │                       │
+│                   └─────────────────────────┘                       │
+│                             MINIO                                   │
+└─────────────────────────────────────────────────────────────────────┘
+        │                │               │                 │
+        ▼                ▼               ▼                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                          CAMADA DE CONSUMO                          │
+│                                                                     │
+│  ┌──────────┐    ┌───────────┐    ┌────────┐    ┌────────────────┐  │
+│  │Streamlit │    │  MLflow   │    │ Apache │    │    Outros      │  │
+│  │Dashboards│    │  Models   │    │ Spark  │    │  Consumidores  │  │
+│  └──────────┘    └───────────┘    └────────┘    └────────────────┘  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-O sistema é composto por vários componentes integrados que formam uma plataforma completa de Data Lakehouse:
+A arquitetura Medallion possui três camadas principais:
 
-### Armazenamento de Dados
-- **[MinIO](docs/minio/README.md)**: Sistema de armazenamento de objetos compatível com Amazon S3
-  - Console: [http://localhost:9001](http://localhost:9001) (admin/admin123)
-  - API: [http://localhost:9000](http://localhost:9000)
-  - Buckets: bronze, silver, gold (arquitetura Medallion)
-  - **Versão**: 2025-04-22
+1. **Bronze**: Dados brutos ingeridos exatamente como foram recebidos
+2. **Silver**: Dados limpos, validados e transformados
+3. **Gold**: Dados agregados e preparados para consumo por aplicações
 
-### Ingestão e ETL
-- **[Apache NiFi](docs/nifi/README.md)**: Plataforma para automação de fluxos de dados
-  - UI: [https://localhost:8443](https://localhost:8443) (nifi/senha-configurada)
-  - Drivers JDBC pré-instalados para PostgreSQL, MySQL, Oracle
-  - **Versão**: 2.4.0
-
-### Processamento de Dados
-- **[Apache Spark](docs/spark/README.md)**: Framework de processamento distribuído
-  - Master UI: [http://localhost:8080](http://localhost:8080)
-  - Worker UI: [http://localhost:8081](http://localhost:8081)
-  - **Versão**: 3.5.5
-- **[Delta Lake](docs/spark/README.md#delta-lake)**: Camada de armazenamento que traz transações ACID para Spark
-  - Formatos: delta (com garantias ACID)
-  - Recursos: Time Travel, MERGE, Z-Order, Optimize
-  - **Versão**: 3.3.1
-- **[Apache Kafka](docs/kafka/README.md)**: Plataforma de streaming distribuído
-  - Broker: [localhost:9092](localhost:9092)
-  - Interface: [http://localhost:8090](http://localhost:8090)
-  - **Versão**: 7.5.0
-
-### Machine Learning
-- **[MLflow](docs/mlflow/README.md)**: Plataforma para gerenciamento do ciclo de vida de ML
-  - UI: [http://localhost:5000](http://localhost:5000)
-  - Tracking, registros de modelos e serviço
-  - Integração com MinIO para armazenamento de artefatos
-  - **Versão**: 2.22.0
-
-### Orquestração
-- **[Prefect](docs/prefect/README.md)**: Orquestrador de fluxos de dados
-  - UI: [http://localhost:4200](http://localhost:4200)
-  - Fluxos, tarefas e monitoramento
-  - **Versão**: 3.4.1
-
-### Desenvolvimento
-- **[JupyterHub](docs/jupyterhub/README.md)**: Ambiente de desenvolvimento interativo multi-usuário
-  - UI: [http://localhost:8888](http://localhost:8888)
-  - Notebooks para análise exploratória
-  - **Versão**: 5.3.0
-
-### Visualização
-- **[Streamlit](docs/streamlit/README.md)**: Framework para criação de aplicações de dados
-  - UI: [http://localhost:8501](http://localhost:8501)
-  - Dashboards interativos
-  - **Versão**: 1.45.0
-
-## 🚀 Início Rápido
+## 🚀 Como Começar
 
 ### Pré-requisitos
 
-- Docker e Docker Compose instalados
-- Git (opcional, para clonar o repositório)
-- Recomendado: 8GB+ de RAM e 20GB+ de espaço em disco
+- Docker
+- Docker Compose
+- Git
 
-### Instalação
+### Instalação e Inicialização
 
-1. Clone o repositório (ou baixe como ZIP):
+1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/dataflow-lab.git
-   cd dataflow-lab
+   git clone https://github.com/seuusuario/datalab.git
+   cd datalab
    ```
 
-2. Crie um arquivo `.env` com as credenciais necessárias:
-   ```bash
-   echo "MINIO_ROOT_USER=admin" > .env
-   echo "MINIO_ROOT_PASSWORD=admin123" >> .env
-   echo "AWS_ACCESS_KEY_ID=admin" >> .env
-   echo "AWS_SECRET_ACCESS_KEY=admin123" >> .env
-   ```
-
-3. Inicie os serviços:
+2. Inicie os serviços:
    ```bash
    docker-compose up -d
    ```
 
-4. Verifique se todos os serviços estão rodando:
-   ```bash
-   docker-compose ps
-   ```
+3. Acesse os componentes pelos seguintes URLs (após alguns minutos para inicialização):
+   - JupyterHub: [http://localhost:8000](http://localhost:8000) (admin/admin)
+   - MinIO Console: [http://localhost:9001](http://localhost:9001) (admin/admin123)
+   - Apache Spark UI: [http://localhost:8080](http://localhost:8080)
+   - MLflow UI: [http://localhost:5000](http://localhost:5000)
+   - Prefect UI: [http://localhost:4200](http://localhost:4200)
+   - Streamlit: [http://localhost:8501](http://localhost:8501)
+   - Apache NiFi: [https://localhost:8443/nifi](https://localhost:8443/nifi) (nifi/HGd15bvfv8744ghbdhgdv7895agqERAo)
+   - Kafka UI: [http://localhost:8090](http://localhost:8090)
 
-   Para verificar os logs de um serviço específico (por exemplo, Spark):
-   ```bash
-   docker-compose logs spark-master
-   ```
+### Inicializando os Buckets MinIO
 
-### URLs dos Serviços
-
-| Serviço      | URL                      | Credenciais      |
-| ------------ | ------------------------ | ---------------- |
-| MinIO        | http://localhost:9001    | admin/admin123   |
-| Apache NiFi  | https://localhost:8443   | nifi/senha-config |
-| Spark Master | http://localhost:8080    | -                |
-| MLflow       | http://localhost:5000    | -                |
-| Prefect UI   | http://localhost:4200    | -                |
-| JupyterHub   | http://localhost:8888    | (token nos logs) |
-| Streamlit    | http://localhost:8501    | -                |
-| Kafka UI     | http://localhost:8090    | -                |
-
-## 📂 Estrutura do Projeto
-
-```
-dataflow-lab/
-│
-├── docker-compose.yml      # Definição dos serviços Docker
-├── jupyterhub_config.py    # Configuração do JupyterHub
-├── README.md               # Este arquivo
-├── LICENSE                 # Licença do projeto
-├── requirements.txt        # Dependências Python (incluindo delta-spark)
-│
-├── app/                    # Código Python da aplicação
-│   ├── analytics.py               # Funções analíticas com Spark
-│   ├── app.py                     # Aplicação principal
-│   ├── medallion_architecture.py  # Implementação da arquitetura Medallion
-│   ├── medallion_example.py       # Exemplo de uso
-│   ├── medallion_prefect_flow.py  # Fluxos Prefect para orquestração
-│   ├── mlflow.py                  # Integrações com MLflow
-│   └── tutorial.py                # Tutoriais e exemplos
-│
-├── docs/                   # Documentação detalhada
-│   ├── airflow/            # Documentação do Airflow
-│   ├── jupyterhub/         # Documentação do JupyterHub
-│   ├── kafka/              # Documentação do Kafka
-│   ├── minio/              # Documentação do MinIO
-│   ├── mlflow/             # Documentação do MLflow
-│   ├── nifi/               # Documentação do NiFi
-│   ├── prefect/            # Documentação do Prefect
-│   ├── spark/              # Documentação do Apache Spark e Delta Lake
-│   └── streamlit/          # Documentação do Streamlit
-│
-├── notebooks/              # Jupyter notebooks de exemplo
-│   ├── jupyterhub_credentials.ipynb # Informações de credenciais
-│   ├── magnomatos822/      # Notebooks do usuário
-│   │   └── amazon.ipynb    # Análise de dados da Amazon
-│   ├── nifi_tutorials/     # Tutoriais do NiFi
-│   └── retail_analysis/    # Análise de dados de varejo
-│
-├── config/                 # Arquivos de configuração
-│   ├── airflow/            # Configurações do Airflow
-│   ├── jupyterhub/         # Configurações do JupyterHub
-│   ├── mlflow/             # Configurações do MLflow
-│   ├── spark/              # Configurações do Spark
-│   │   └── conf/           # Arquivos de configuração do Spark
-│   └── streamlit/          # Configurações do Streamlit
-│
-├── data/                   # Diretório para armazenar dados
-│   ├── airflow/            # Dados do Airflow
-│   ├── jupyter/            # Dados do JupyterHub
-│   ├── minio/              # Buckets do MinIO (bronze, silver, gold)
-│   ├── mlflow/             # Dados do MLflow
-│   ├── nifi/               # Dados do NiFi
-│   ├── postgres/           # Dados do PostgreSQL
-│   ├── prefect/            # Dados do Prefect
-│   └── spark/              # Logs e dados do Spark
-│
-├── flows/                  # Definições de fluxos Prefect
-├── mlruns/                 # Diretório para armazenar artefatos do MLflow
-│   └── models/             # Modelos treinados
-│
-├── models/                 # Modelos exportados
-│
-├── nifi/                   # Recursos para Apache NiFi
-│   ├── drivers/            # Drivers JDBC organizados por tipo de banco
-│   └── jdbc/               # Drivers JDBC gerais
-│
-└── scripts/                # Scripts utilitários
-    ├── download_spark_jars.sh  # Script para baixar JARs do Spark
-    └── init_minio.sh      # Script para inicialização do MinIO
-```
-
-## 📊 Uso do Sistema
-
-### Arquitetura Medallion
-
-Nossa implementação segue a arquitetura Medallion (também conhecida como multi-hop), organizada em três camadas principais:
-
-1. **Bronze**: Dados brutos ingeridos sem modificações ou com mínimas transformações
-   - Preserva os dados originais para auditoria e recuperação
-   - Inclui metadados como hora de ingestão e fonte
-
-2. **Silver**: Dados limpos, validados e transformados
-   - Dados normalizados e estruturados
-   - Valores nulos tratados e anomalias removidas
-   - Esquema consistente e documentado
-
-3. **Gold**: Dados refinados e agregados para consumo
-   - Tabelas e views preparadas para análise
-   - Dados agregados e modelados para casos de uso específicos
-   - Otimizados para consulta e análise
-
-### Transações ACID com Delta Lake
-
-O projeto implementa o Delta Lake para fornecer garantias ACID (Atomicidade, Consistência, Isolamento, Durabilidade):
-
-- **Atualizações incrementais (MERGE)**: Capacidade de atualizar registros existentes e inserir novos em uma única operação atômica
-- **Time Travel**: Acesso a versões anteriores dos dados usando versão específica ou timestamp
-- **Otimização de tabelas**: Compactação de arquivos pequenos e Z-Order para melhor performance de consulta
-- **Schema Enforcement**: Validação automática de esquema para garantir qualidade dos dados
-- **Gerenciamento de histórico**: Controle sobre retenção de versões antigas para economia de espaço
-
-### Fluxo de Dados Típico
-
-1. **Ingestão de Dados**: Coleta de dados de fontes diversas (APIs, bancos de dados, arquivos) usando NiFi
-2. **Armazenamento Bronze**: Armazenamento dos dados brutos no formato Delta Lake (MinIO)
-3. **Processamento Silver**: Limpeza e transformação com Apache Spark
-4. **Refinamento Gold**: Agregações e modelagem para análise
-5. **Modelagem**: Treinamento de modelos preditivos com rastreamento no MLflow
-6. **Orquestração**: Automatização e agendamento de pipelines com Prefect
-7. **Visualização**: Dashboards e aplicações com Streamlit
-
-### Casos de Uso
-
-O DataFlow Lab foi projetado para suportar diversos casos de uso:
-
-- **ETL e ELT modernos**: Processamento de dados com estrutura de medallion
-- **Machine Learning**: Treinamento e implementação de modelos com MLflow
-- **Análise financeira**: Processamento de séries temporais e dados financeiros
-- **Processamento de logs**: Análise de logs e telemetria
-- **Integração de dados**: Unificação de fontes de dados heterogêneas
-- **Analytics em tempo real**: Processamento de streaming com Kafka e Spark Structured Streaming
-
-### Exemplos Práticos
-
-Consulte nossos exemplos para casos de uso comuns:
-
-- `/app/medallion_example.py`: Exemplo completo da arquitetura Medallion com Delta Lake
-- `/app/medallion_prefect_flow.py`: Orquestração do pipeline Medallion usando Prefect
-- `/app/analytics.py`: Análises avançadas com Apache Spark
-- `/notebooks/magnomatos822/amazon.ipynb`: Análise de dados financeiros da Amazon
-
-Para executar o exemplo da arquitetura Medallion:
+Os buckets do MinIO são inicializados automaticamente na primeira execução. Se necessário, você pode inicializá-los manualmente:
 
 ```bash
-docker exec -it spark-master python /opt/spark-apps/medallion_prefect_flow.py
+./scripts/init_minio.sh
 ```
 
-## 🔄 Integração com Apache NiFi
+## 📚 Tutoriais e Exemplos
 
-O DataFlow Lab utiliza o Apache NiFi (2.4.0) para ingestão e transformação de dados. As principais características da integração são:
+### JupyterHub
 
-- **Interface segura**: Acesso via HTTPS em https://localhost:8443
-- **Drivers pré-configurados**: PostgreSQL, MySQL, MS SQL Server e Oracle
-- **Fluxos de exemplo**: Disponíveis na pasta `nifi/templates`
-- **Organização por tipo**: Drivers organizados por tipo de banco de dados
+O JupyterHub contém vários notebooks de exemplo para ajudá-lo a começar:
 
-Para acessar o Apache NiFi:
+1. Autentique-se em [http://localhost:8000](http://localhost:8000) com as credenciais `admin`/`admin`
+2. Navegue até a pasta `examples/` para ver os notebooks de exemplo
+3. Comece com o notebook `medallion_architecture.ipynb` para uma visão geral da arquitetura
 
-1. Acesse [https://localhost:8443/nifi](https://localhost:8443/nifi)
-2. Utilize as credenciais configuradas (padrão: nifi/senha-configurada)
-3. Importe templates ou crie novos fluxos
+### Exemplos de Arquitetura Medallion
 
-Exemplo de NiFi para enviar dados para o Data Lake:
-```
-GetFile -> ExtractText -> ConvertJSONtoSQL -> PutS3Object
-```
+- **Ingestão para Bronze**: Consulte o notebook `examples/bronze_ingestion.ipynb`
+- **Processamento Bronze para Silver**: Consulte o notebook `examples/silver_processing.ipynb`
+- **Agregações Silver para Gold**: Consulte o notebook `examples/gold_aggregations.ipynb`
 
-## 📈 Analytics com Spark e Kafka
+## 📋 Casos de Uso Comuns
 
-O componente de analytics (`app/analytics.py`) fornece funções para análise de dados avançada, agora com integrações Kafka:
-
-- **Análise em tempo real**: Processamento de eventos em tempo real com Kafka
-- **Análise de séries temporais**: Previsões e detecção de tendências
-- **Detecção de anomalias**: Identificação de padrões incomuns
-- **Análise de sentimento**: Processamento de texto com NLP
-- **Analytics preditivos**: Modelos de machine learning avançados
-
-Exemplo de uso com Kafka:
+### 1. Processamento de Dados Completo
 
 ```python
-from app.analytics import StreamProcessor
+# No JupyterHub, usando PySpark com Delta Lake
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
 
-# Configurar processador de streaming
-processor = StreamProcessor(
-    bootstrap_servers="kafka:9092",
-    input_topic="raw_data",
-    output_topic="processed_data"
-)
+# Inicialização do Spark com suporte a Delta
+spark = SparkSession.builder \
+    .appName("MedallionExample") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
+    .config("spark.hadoop.fs.s3a.access.key", "admin") \
+    .config("spark.hadoop.fs.s3a.secret.key", "admin123") \
+    .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+    .getOrCreate()
 
-# Definir transformação
-def transform(df):
-    return df.withColumn("processed_value", df.value * 2)
+# 1. Ler da camada Bronze
+bronze_df = spark.read.format("delta").load("s3a://bronze/raw_data_source1/table1")
 
-# Iniciar processamento
-processor.start_processing(transform)
+# 2. Processar para Silver (limpeza e transformação)
+silver_df = bronze_df \
+    .dropDuplicates() \
+    .filter(col("valor") > 0) \
+    .withColumn("processed_date", current_date())
+
+# 3. Salvar na camada Silver
+silver_df.write.format("delta") \
+    .mode("overwrite") \
+    .save("s3a://silver/clean_data_domain1/table1")
+
+# 4. Processar para Gold (agregação para análise)
+gold_df = silver_df \
+    .groupBy("categoria", "região") \
+    .agg(sum("valor").alias("valor_total")) \
+    .orderBy(desc("valor_total"))
+
+# 5. Salvar na camada Gold
+gold_df.write.format("delta") \
+    .mode("overwrite") \
+    .save("s3a://gold/analytics_domain1/dashboard1")
 ```
 
-## 👥 Contribuição
+### 2. Machine Learning com MLflow
 
-Contribuições são bem-vindas! Por favor, siga estas etapas para contribuir:
+```python
+# No JupyterHub
+import mlflow
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
-1. Fork o repositório
-2. Crie um branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas alterações (`git commit -am 'Adiciona nova funcionalidade'`)
-4. Push para o branch (`git push origin feature/nova-funcionalidade`)
-5. Crie um Pull Request
+# Configurar MLflow
+mlflow.set_tracking_uri("http://mlflow:5000")
+mlflow.set_experiment("modelo-classificacao")
+
+# Carregar dados da camada Silver
+spark = SparkSession.builder.getOrCreate()
+data = spark.read.format("delta").load("s3a://silver/clean_data_domain1/table1").toPandas()
+
+# Preparar dados
+X = data.drop("target_column", axis=1)
+y = data["target_column"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Treinar com tracking do MLflow
+with mlflow.start_run():
+    # Configurações do modelo
+    params = {"n_estimators": 100, "max_depth": 10, "random_state": 42}
+    mlflow.log_params(params)
+    
+    # Treinar modelo
+    model = RandomForestClassifier(**params)
+    model.fit(X_train, y_train)
+    
+    # Avaliar modelo
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')
+    recall = recall_score(y_test, y_pred, average='weighted')
+    
+    # Registrar métricas
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision", precision)
+    mlflow.log_metric("recall", recall)
+    
+    # Registrar modelo
+    mlflow.sklearn.log_model(model, "random_forest_model")
+    
+    print(f"Treinamento concluído - Acurácia: {accuracy:.4f}")
+```
+
+### 3. Orquestração com Prefect
+
+```python
+# No JupyterHub ou em um arquivo Python
+from prefect import flow, task
+from prefect.task_runners import SequentialTaskRunner
+from pyspark.sql import SparkSession
+
+@task(retries=3, retry_delay_seconds=30)
+def extract_bronze_data(source):
+    spark = SparkSession.builder.getOrCreate()
+    return spark.read.format("delta").load(f"s3a://bronze/{source}")
+
+@task
+def transform_to_silver(df):
+    from pyspark.sql.functions import current_timestamp, col
+    
+    return df.dropDuplicates() \
+        .filter(col("valor") > 0) \
+        .withColumn("processed_ts", current_timestamp())
+
+@task
+def load_to_silver(df, destination):
+    df.write.format("delta") \
+        .mode("overwrite") \
+        .save(f"s3a://silver/{destination}")
+    return f"s3a://silver/{destination}"
+
+@flow(task_runner=SequentialTaskRunner())
+def bronze_to_silver_etl(source="raw_data_source1/table1", destination="clean_data_domain1/table1"):
+    # Extract
+    raw_data = extract_bronze_data(source)
+    
+    # Transform
+    transformed_data = transform_to_silver(raw_data)
+    
+    # Load
+    result_path = load_to_silver(transformed_data, destination)
+    
+    return result_path
+
+# Execução
+if __name__ == "__main__":
+    result = bronze_to_silver_etl()
+    print(f"ETL concluído! Dados armazenados em: {result}")
+```
+
+## 📈 Painéis e Visualizações
+
+Crie visualizações interativas com Streamlit:
+
+1. Acesse o Streamlit em [http://localhost:8501](http://localhost:8501)
+2. Use os painéis pré-configurados ou crie novos com base nos dados das camadas Gold
+
+## 🔄 Fluxos de Ingestão
+
+Configure fluxos de ingestão de dados com Apache NiFi:
+
+1. Acesse o NiFi em [https://localhost:8443/nifi](https://localhost:8443/nifi) (usuário: nifi, senha: HGd15bvfv8744ghbdhgdv7895agqERAo)
+2. Importe os templates de fluxo disponíveis ou crie novos fluxos de ingestão
+
+## 🎯 Casos de Uso
+
+O DataFlow Lab é adequado para:
+
+- **Engenharia de Dados**: Construção de pipelines ETL/ELT robustos
+- **Data Science**: Experimentação, validação e deployment de modelos
+- **Analytics**: Criação de painéis e relatórios interativos
+- **MLOps**: Ciclo completo de vida de modelos de machine learning
+- **Streaming**: Processamento de dados em tempo real
+- **Governança de Dados**: Catalogação e linhagem de dados
+
+## 💡 Funcionalidades Avançadas
+
+### 1. Integração com Contas Cloud
+
+Para usar com provedores de nuvem, configure suas credenciais:
+
+```yaml
+# Em docker-compose.yml, adicione as variáveis de ambiente
+environment:
+  - AWS_ACCESS_KEY_ID=sua-chave
+  - AWS_SECRET_ACCESS_KEY=sua-senha
+```
+
+### 2. Escalabilidade
+
+Para escalar o processamento, ajuste os recursos no docker-compose.yml:
+
+```yaml
+services:
+  spark-worker:
+    deploy:
+      replicas: 3  # Aumentar número de workers
+    environment:
+      - SPARK_WORKER_CORES=4
+      - SPARK_WORKER_MEMORY=8g
+```
+
+### 3. Segurança
+
+Configure autenticação e autorização mais robustas:
+
+```yaml
+services:
+  jupyterhub:
+    environment:
+      - JUPYTERHUB_ADMIN_USER=seunome
+      - JUPYTERHUB_ADMIN_PASSWORD=senha-segura
+```
+
+## 🛠️ Manutenção e Resolução de Problemas
+
+### Comandos Úteis
+
+```bash
+# Ver logs de um serviço
+docker-compose logs -f [serviço]
+
+# Reiniciar um serviço específico
+docker-compose restart [serviço]
+
+# Verificar uso de recursos
+docker stats
+
+# Parar todos os serviços
+docker-compose down
+
+# Remover volumes (cuidado - apaga todos os dados)
+docker-compose down -v
+```
+
+### Problemas Comuns
+
+| Problema                  | Solução                                                             |
+| ------------------------- | ------------------------------------------------------------------- |
+| Erro de conexão com MinIO | Verifique se o serviço está rodando e as credenciais estão corretas |
+| Jupyter não carrega       | Verifique logs e se há memória suficiente disponível                |
+| Erro Spark Connection     | Verifique status do serviço spark-master                            |
+| Lentidão no processamento | Considere aumentar recursos dos workers                             |
+| Falhas no MLflow          | Verifique conexão com o banco de dados do MLflow                    |
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie sua feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit suas alterações (`git commit -m 'Add amazing feature'`)
+4. Push para a branch (`git push origin feature/amazing-feature`)
+5. Abra um Pull Request
 
 ## 📄 Licença
 
-Este projeto é licenciado sob a [GNU General Public License v3.0](LICENSE) - veja o arquivo LICENSE para detalhes.
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 📚 Recursos Adicionais
+
+- [Documentação da Arquitetura Medallion](https://docs.databricks.com/lakehouse/medallion.html)
+- [Guia do Delta Lake](https://docs.delta.io/latest/index.html)
+- [MLflow Tracking](https://mlflow.org/docs/latest/tracking.html)
+- [Prefect Documentação](https://docs.prefect.io/)
+- [Apache Spark Guia](https://spark.apache.org/docs/latest/)
+- [Streamlit Documentação](https://docs.streamlit.io/)
+- [MinIO Reference](https://docs.min.io/)
+- [Apache Kafka](https://kafka.apache.org/documentation/)
+- [Apache NiFi Guide](https://nifi.apache.org/docs.html)
+- [JupyterHub](https://jupyterhub.readthedocs.io/en/stable/)

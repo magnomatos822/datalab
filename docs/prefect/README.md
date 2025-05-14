@@ -424,13 +424,13 @@ def tarefa_logging():
 
 ## Resolução de Problemas
 
-| Problema | Solução |
-|----------|---------|
-| Flow travado | Verifique os logs e o status na UI do Prefect |
-| Erros de conexão | Confirme que o servidor Prefect está acessível |
-| Falhas em tarefas específicas | Use a opção de retry e verifique as dependências |
-| Problemas de permissão | Verifique permissões nos volumes compartilhados |
-| Prefect UI inacessível | Verifique se o container está rodando: `docker-compose ps prefect` |
+| Problema                      | Solução                                                            |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Flow travado                  | Verifique os logs e o status na UI do Prefect                      |
+| Erros de conexão              | Confirme que o servidor Prefect está acessível                     |
+| Falhas em tarefas específicas | Use a opção de retry e verifique as dependências                   |
+| Problemas de permissão        | Verifique permissões nos volumes compartilhados                    |
+| Prefect UI inacessível        | Verifique se o container está rodando: `docker-compose ps prefect` |
 
 ## Recursos Adicionais
 

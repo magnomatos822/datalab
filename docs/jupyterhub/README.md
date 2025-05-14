@@ -1,203 +1,420 @@
-# JupyterHub no DataFlow Lab
+# JupyterHub - Ambiente de Desenvolvimento Colaborativo
 
-## Visão Geral
+<div align="center">
+  <img src="https://img.shields.io/badge/JupyterHub-F37626?style=for-the-badge&logo=jupyter&logoColor=white" alt="JupyterHub">
+</div>
 
-[JupyterHub](https://jupyter.org/hub) é uma plataforma multi-usuário para notebooks Jupyter, permitindo que equipes de analistas e cientistas de dados colaborem em um ambiente centralizado. No DataFlow Lab, o JupyterHub serve como o principal ambiente de desenvolvimento para análise exploratória, visualização de dados e prototipagem de modelos de machine learning.
+> Versão: 4.0.2
 
-Última atualização: **13 de maio de 2025**
+## O que é JupyterHub?
 
-## Recursos Principais
+JupyterHub é uma plataforma multi-usuário que permite hospedar notebooks Jupyter para múltiplos usuários com autenticação, permissões e recursos personalizados. No DataFlow Lab, o JupyterHub serve como o ambiente central de desenvolvimento para cientistas de dados e engenheiros, fornecendo acesso a todos os componentes do ecossistema de dados através de uma interface familiar baseada em notebooks.
 
-- **Notebooks Multi-usuário**: Ambiente compartilhado para toda a equipe
-- **Autenticação**: Sistema integrado de autenticação e autorização
-- **Persistência**: Armazenamento persistente dos notebooks e arquivos
-- **Extensibilidade**: Suporte para extensões e pacotes personalizados
-- **Integração com Spark**: Conectividade nativa com clusters Spark
+## Características Principais
 
-## Como Utilizar
+- **Multi-usuário**: Suporte a múltiplos usuários com isolamento de ambientes
+- **Autenticação Configurável**: Suporte a diferentes métodos de autenticação
+- **Kernels Diversos**: Python, PySpark, R, e outros
+- **Escalabilidade**: Pode escalar de um único servidor a um cluster Kubernetes
+- **Compartilhamento**: Colaboração facilitada entre equipes
+- **Integração**: Conexão direta com o ecossistema de big data
 
-### Acessando o JupyterHub
+## Como Acessar
 
-1. Após iniciar o ambiente com `docker-compose up -d`, acesse:
-   - URL: http://localhost:8888
-   - Usuário padrão: `jovyan` (usuário configurado no Dockerfile)
-   - Autenticação: Configurada conforme jupyterhub_config.py
-   *(Nota: Em um ambiente de produção, é recomendável configurar um sistema de autenticação adequado)*
+O JupyterHub está disponível em:
 
-### Principais Funcionalidades
+- **URL**: [http://localhost:8000](http://localhost:8000)
+- **Credenciais Padrão**:
+  - Usuário: admin
+  - Senha: admin
 
-#### Criando um Novo Notebook
+## Ambientes e Kernels Disponíveis
 
-1. Na interface inicial, clique em "New" e selecione "Python 3"
-2. O novo notebook será criado com um kernel Python padrão
-3. Digite código em células e execute com Shift+Enter ou o botão "Run"
+O JupyterHub no DataFlow Lab vem pré-configurado com os seguintes kernels:
 
-#### Conectando-se ao Spark
+1. **Python 3**: Ambiente Python padrão com bibliotecas de ciência de dados
+2. **PySpark**: Kernel com integração ao cluster Apache Spark
+3. **R**: Ambiente R para análises estatísticas (opcional)
 
-Para realizar análises distribuídas com Spark:
+## Bibliotecas Pré-instaladas
 
-```python
-from pyspark.sql import SparkSession
+### Python/PySpark
 
-# Configuração com suporte ao Delta Lake
-spark = (SparkSession.builder
-         .appName("DataFlow-Lab-Analysis")
-         .config("spark.jars.packages", "io.delta:delta-core_2.12:2.3.0")
-         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-         .getOrCreate())
-
-# Acessando dados da camada silver
-df = spark.read.format("delta").load("s3a://silver/customers")
-
-# Visualização inicial dos dados
-df.show(5)
+```
+pandas==2.0.2
+numpy==1.24.4
+matplotlib==3.8.2
+seaborn==0.13.0
+scikit-learn==1.3.2
+delta-spark==3.3.1
+pyspark==3.5.5
+pyarrow==19.0.1
+mlflow==2.22.0
+prefect==3.4.1
+boto3==1.34.7
+plotly==5.22.0
+streamlit==1.45.0
+jupyterlab==4.0.11
+jupyter-server-proxy==4.2.0
+ipywidgets==8.1.1
 ```
 
-#### Acessando Dados no MinIO/S3
+### R (Opcional)
 
-Para acessar dados armazenados no MinIO:
-
-```python
-import pandas as pd
-import boto3
-from io import BytesIO
-
-# Configurar cliente S3 apontando para MinIO
-s3_client = boto3.client(
-    's3',
-    endpoint_url='http://minio:9000',
-    aws_access_key_id='minioadmin',
-    aws_secret_access_key='minioadmin',
-    region_name='us-east-1'
-)
-
-# Listar buckets disponíveis
-response = s3_client.list_buckets()
-for bucket in response['Buckets']:
-    print(f"Bucket: {bucket['Name']}")
-
-# Ler um arquivo CSV diretamente do MinIO
-obj = s3_client.get_object(Bucket='bronze', Key='sample/data.csv')
-df = pd.read_csv(BytesIO(obj['Body'].read()))
 ```
-
-#### Visualização de Dados
-
-Exemplo de como criar visualizações:
-
-```python
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Configuração visual
-plt.style.use('ggplot')
-plt.figure(figsize=(12, 8))
-
-# Gráfico de barras simples
-sns.barplot(x='categoria', y='vendas', data=df)
-plt.title('Vendas por Categoria')
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
-
-# Gráfico de série temporal
-df_ts = df.groupby('data')['vendas'].sum().reset_index()
-plt.figure(figsize=(14, 6))
-plt.plot(df_ts['data'], df_ts['vendas'], marker='o')
-plt.title('Vendas ao Longo do Tempo')
-plt.grid(True, alpha=0.3)
-plt.show()
-```
-
-#### Integração com MLflow
-
-Para rastrear experimentos de machine learning:
-
-```python
-import mlflow
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-
-# Configurar MLflow - conectando ao servidor do MLflow no Docker
-mlflow.set_tracking_uri("http://mlflow:5000")
-mlflow.set_experiment("Previsão de Vendas")
-
-# Preparar dados
-X = df[['feature1', 'feature2', 'feature3']]
-y = df['target']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-# Iniciar experimento MLflow
-with mlflow.start_run():
-    # Definir parâmetros
-    params = {
-        'n_estimators': 100,
-        'max_depth': 5,
-        'random_state': 42
-    }
-    
-    # Treinar modelo
-    model = RandomForestRegressor(**params)
-    model.fit(X_train, y_train)
-    
-    # Avaliar modelo
-    y_pred = model.predict(X_test)
-    rmse = mean_squared_error(y_test, y_pred, squared=False)
-    r2 = r2_score(y_test, y_pred)
-    
-    # Registrar parâmetros e métricas
-    mlflow.log_params(params)
-    mlflow.log_metric("RMSE", rmse)
-    mlflow.log_metric("R2", r2)
-    
-    # Registrar o modelo
-    mlflow.sklearn.log_model(model, "random_forest_model")
-    
-    print(f"RMSE: {rmse:.4f}")
-    print(f"R2: {r2:.4f}")
-    print(f"Modelo registrado no MLflow")
+tidyverse
+sparklyr
+ggplot2
+rmarkdown
+shiny
 ```
 
 ## Estrutura de Diretórios
 
-O JupyterHub no DataFlow Lab mantém seus arquivos na seguinte estrutura:
+Cada usuário no JupyterHub tem seu próprio espaço de trabalho isolado:
 
 ```
 /home/jovyan/
-├── notebooks/            # Notebooks principais
-├── data/                 # Arquivos de dados locais
-├── scripts/              # Scripts Python auxiliares
-└── reports/              # Notebooks para relatórios
+├── work/                    # Diretório padrão mapeado para trabalho do usuário
+│   └── [arquivos do usuário]
+├── shared/                  # Pasta compartilhada entre usuários
+│   ├── datasets/            # Conjuntos de dados compartilhados
+│   └── notebooks/           # Notebooks compartilhados
+└── examples/                # Notebooks de exemplo e tutoriais
+    ├── spark/               # Exemplos de uso do Spark
+    ├── mlflow/              # Exemplos de integração com MLflow
+    └── medallion/           # Exemplos da arquitetura Medallion
 ```
 
-## Extensões Recomendadas
+## Conexão com outros Componentes
 
-O ambiente já inclui várias extensões úteis:
+### 1. Integração com Apache Spark
 
-- **jupyterlab-git**: Integração com git para versionamento
-- **jupyterlab-toc**: Tabela de conteúdo automática para notebooks
-- **jupyterlab-sql**: Consultas SQL direto do notebook
-- **jupyterlab-plotly**: Integração com gráficos Plotly
+O kernel PySpark está pré-configurado para se conectar ao cluster Spark:
 
-## Boas Práticas
+```python
+# Isso já está configurado no kernel PySpark, mas pode ser usado no Python normal também
+from pyspark.sql import SparkSession
 
-- **Notebooks Modulares**: Divida análises complexas em múltiplos notebooks
-- **Documentação**: Use células markdown para documentar seu raciocínio
-- **Código Reutilizável**: Mova funções reutilizáveis para módulos Python
-- **Checkpoints**: Salve regularmente e crie versões dos notebooks importantes
-- **Limpeza de Recursos**: Encerre conexões Spark quando não estiverem sendo usadas
+# Criar sessão Spark com suporte a Delta Lake
+spark = SparkSession.builder \
+    .appName("JupyterNotebook") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
+    .config("spark.hadoop.fs.s3a.access.key", "admin") \
+    .config("spark.hadoop.fs.s3a.secret.key", "admin123") \
+    .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+    .getOrCreate()
 
-## Solução de Problemas
+# Exemplo de leitura de dados
+df = spark.read.format("delta").load("s3a://silver/clean_data_domain1/table1")
+df.show(5)
+```
 
-- **Kernel morrendo**: Verifique o uso de memória, pode ser necessário aumentar os limites
-- **Conexão com MinIO/Spark**: Verifique se as URLs e credenciais estão corretas
-- **Pacotes ausentes**: Use `!pip install` para instalar pacotes adicionais
-- **Notebooks lentos**: Considere otimizar o código ou utilizar amostragem para conjuntos grandes
+### 2. Integração com MLflow
+
+Acesso direto ao servidor MLflow para rastreamento de experimentos:
+
+```python
+import mlflow
+import mlflow.sklearn
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import numpy as np
+
+# Configurar MLflow
+mlflow.set_tracking_uri("http://mlflow:5000")
+mlflow.set_experiment("jupyter_experiment")
+
+# Treinar modelo com tracking
+with mlflow.start_run():
+    # Dados de exemplo
+    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    y = np.dot(X, np.array([1, 2])) + 3
+    
+    # Parâmetros do modelo
+    params = {"n_estimators": 100, "max_depth": 4}
+    mlflow.log_params(params)
+    
+    # Treinar modelo
+    model = RandomForestRegressor(**params)
+    model.fit(X, y)
+    
+    # Log métricas
+    y_pred = model.predict(X)
+    mse = mean_squared_error(y, y_pred)
+    mlflow.log_metric("mse", mse)
+    
+    # Log modelo
+    mlflow.sklearn.log_model(model, "random_forest_model")
+    
+    print(f"MSE: {mse}")
+    print(f"Run ID: {mlflow.active_run().info.run_id}")
+```
+
+### 3. Acesso ao MinIO (S3)
+
+Acesso direto aos dados armazenados no MinIO:
+
+```python
+import boto3
+from botocore.client import Config
+
+# Configurar cliente S3
+s3_client = boto3.client(
+    's3',
+    endpoint_url='http://minio:9000',
+    aws_access_key_id='admin',
+    aws_secret_access_key='admin123',
+    config=Config(signature_version='s3v4'),
+    region_name='us-east-1'
+)
+
+# Listar buckets
+response = s3_client.list_buckets()
+for bucket in response['Buckets']:
+    print(f"Bucket: {bucket['Name']}")
+
+# Listar objetos em um bucket
+response = s3_client.list_objects_v2(
+    Bucket='bronze',
+    Prefix='raw_data_source1/'
+)
+
+for obj in response.get('Contents', []):
+    print(f"Objeto: {obj['Key']}")
+```
+
+### 4. Orquestração com Prefect
+
+Criar e executar fluxos Prefect diretamente dos notebooks:
+
+```python
+from prefect import flow, task
+import pandas as pd
+
+@task
+def extract():
+    # Extrair dados
+    return pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+@task
+def transform(data):
+    # Transformar dados
+    data['C'] = data['A'] + data['B']
+    return data
+
+@task
+def load(data):
+    # Carregar dados
+    print("Dados processados:")
+    print(data)
+    return "Sucesso"
+
+@flow
+def etl_flow():
+    data = extract()
+    transformed = transform(data)
+    result = load(transformed)
+    return result
+
+# Executar o fluxo
+if __name__ == "__main__":
+    result = etl_flow()
+    print(f"Resultado: {result}")
+```
+
+### 5. Desenvolvimento de Dashboards com Streamlit
+
+Criar e testar aplicações Streamlit:
+
+```python
+%%writefile app.py
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Dados de exemplo
+data = pd.DataFrame({
+    'x': range(1, 11),
+    'y': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+})
+
+# Interface Streamlit
+st.title('Meu Dashboard Streamlit')
+st.write('Um exemplo simples de dashboard')
+
+# Gráfico
+fig, ax = plt.subplots()
+ax.plot(data['x'], data['y'])
+st.pyplot(fig)
+
+# Tabela de dados
+st.write('Dados:')
+st.dataframe(data)
+```
+
+E depois execute com:
+
+```bash
+!streamlit run app.py
+```
+
+## Trabalhando com a Arquitetura Medallion
+
+### Exemplo de Fluxo Completo no JupyterHub
+
+```python
+# Importações
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import current_timestamp, col
+import os
+
+# Criar sessão Spark
+spark = SparkSession.builder \
+    .appName("MedallionArchitecture") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
+    .config("spark.hadoop.fs.s3a.access.key", "admin") \
+    .config("spark.hadoop.fs.s3a.secret.key", "admin123") \
+    .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+    .getOrCreate()
+
+# 1. Camada Bronze - Ingestão de dados brutos
+# Simulando ingestão de CSV
+bronze_data = spark.read.csv("s3a://bronze/raw_data_source1/table1/sales_data.csv", header=True, inferSchema=True)
+
+# Adicionar metadados de ingestão
+bronze_data = bronze_data.withColumn("ingestion_time", current_timestamp())
+
+# Visualizar dados
+print("Dados na camada Bronze:")
+bronze_data.show(5)
+
+# Salvar na camada Bronze (opcional, já que assumimos que os dados já foram ingeridos)
+bronze_data.write.format("delta").mode("overwrite").save("s3a://bronze/raw_data_source1/table1")
+
+# 2. Camada Silver - Limpeza e transformação
+silver_data = bronze_data.dropDuplicates() \
+    .filter(col("valor") > 0) \
+    .withColumn("processed_time", current_timestamp())
+
+# Visualizar dados limpos
+print("\nDados na camada Silver:")
+silver_data.show(5)
+
+# Salvar na camada Silver
+silver_data.write.format("delta").mode("overwrite").save("s3a://silver/clean_data_domain1/table1")
+
+# 3. Camada Gold - Agregações e modelagem para consumo
+gold_data = silver_data.groupBy("categoria", "regiao") \
+    .agg({"valor": "sum"}) \
+    .withColumnRenamed("sum(valor)", "valor_total") \
+    .orderBy("valor_total", ascending=False)
+
+# Visualizar dados agregados
+print("\nDados na camada Gold:")
+gold_data.show(5)
+
+# Salvar na camada Gold
+gold_data.write.format("delta").mode("overwrite").save("s3a://gold/analytics_domain1/sales_by_category")
+
+# 4. Visualização de métricas
+print("\nMétricas principais:")
+print(f"Total de registros na camada Bronze: {bronze_data.count()}")
+print(f"Total de registros na camada Silver: {silver_data.count()}")
+print(f"Total de registros na camada Gold: {gold_data.count()}")
+print(f"Valor total de vendas: {gold_data.agg({'valor_total': 'sum'}).collect()[0][0]}")
+```
+
+## Gerenciamento de Usuários
+
+### Adicionar Novos Usuários
+
+A adição de novos usuários pode ser feita através da interface de administração ou via linha de comando:
+
+```bash
+# Acessar o container
+docker exec -it jupyterhub bash
+
+# Criar um novo usuário
+useradd -m -s /bin/bash novousuario
+echo "novousuario:senha" | chpasswd
+
+# Adicionar ao grupo de usuários do Jupyter
+usermod -a -G jupyterhub novousuario
+```
+
+### Configuração de Cotas e Recursos
+
+O JupyterHub está configurado para limitar os recursos por usuário:
+
+- **CPU**: 2 cores por usuário
+- **RAM**: 4GB por usuário
+- **Armazenamento**: 10GB por usuário
+
+## Extensões Úteis
+
+O ambiente JupyterLab vem com várias extensões pré-instaladas:
+
+1. **Jupyterlab Git**: Interface Git integrada
+2. **Jupyterlab Debugger**: Ferramenta de depuração
+3. **Table of Contents**: Navegação facilitada em notebooks longos
+4. **Variable Inspector**: Inspecionar variáveis durante o desenvolvimento
+5. **Jupyterlab-LSP**: Language Server Protocol para autocompletar e linting
+
+## Boas Práticas 
+
+### 1. Organização de Notebooks
+
+- Use uma estrutura de diretórios consistente
+- Nomeie notebooks de forma descritiva e com versão
+- Adicione documentação no início do notebook
+
+### 2. Otimização de Recursos
+
+- Libere recursos não utilizados (desconectar kernels inativos)
+- Feche conexões Spark quando não estiverem em uso
+- Use `%%capture` para capturar saídas muito grandes
+
+### 3. Versionamento
+
+- Utilize o Git para controle de versão
+- Considere usar jupytext para versionamento de notebooks como scripts
+
+### 4. Reprodutibilidade
+
+- Documente dependências e versões
+- Use ambientes virtuais para isolamento
+- Defina seeds para processos aleatórios
+
+## Resolução de Problemas
+
+| Problema                | Solução                                           |
+| ----------------------- | ------------------------------------------------- |
+| Kernel travando         | Verifique o uso de memória, reinicie o kernel     |
+| Conexão Spark falha     | Verifique se o cluster Spark está ativo           |
+| Notebook não salva      | Verifique permissões de arquivo e espaço em disco |
+| Pacotes Python faltando | Use `!pip install pacote` no notebook             |
+| JupyterHub inacessível  | Verifique logs: `docker logs jupyterhub`          |
+
+## Exemplos e Tutoriais
+
+O diretório `/home/jovyan/examples` contém vários notebooks de exemplo:
+
+1. **spark_basics.ipynb**: Introdução ao Apache Spark
+2. **delta_lake_demo.ipynb**: Trabalhando com tabelas Delta Lake
+3. **mlflow_tracking.ipynb**: Rastreamento de experimentos com MLflow
+4. **medallion_architecture.ipynb**: Implementação da arquitetura Medallion
+5. **streaming_example.ipynb**: Processamento de streaming com Spark
 
 ## Recursos Adicionais
 
 - [Documentação Oficial do JupyterHub](https://jupyterhub.readthedocs.io/)
-- [Documentação do JupyterLab](https://jupyterlab.readthedocs.io/)
-- [Guias de Melhores Práticas para Notebooks](https://jupyterbook.org/en/stable/)
+- [JupyterLab Documentação](https://jupyterlab.readthedocs.io/)
+- [Guia de Configuração do JupyterHub](https://jupyterhub-tutorial.readthedocs.io/)
+- [Jupyter e Big Data](https://blog.jupyter.org/jupyter-and-the-future-of-data-science-bb6740e20303)
+- [Best Practices para Notebooks](https://towardsdatascience.com/jupyter-notebook-best-practices-f430a6ba8c69)

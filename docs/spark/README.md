@@ -365,13 +365,13 @@ O DataFlow Lab oferece várias maneiras de monitorar jobs Spark:
 
 ## Resolução de Problemas
 
-| Problema | Possível Solução |
-|----------|-----------------|
-| Out of Memory | Aumente driver/executor memory ou particione melhor os dados |
-| Lentidão em joins | Use broadcast para tabelas pequenas; verifique particionamento |
-| Arquivos muito pequenos | Execute OPTIMIZE nas tabelas Delta |
-| Conexão S3/MinIO falha | Verifique credenciais e endpoint no arquivo .env |
-| Job travado | Verifique logs do executor e possíveis deadlocks |
+| Problema                | Possível Solução                                               |
+| ----------------------- | -------------------------------------------------------------- |
+| Out of Memory           | Aumente driver/executor memory ou particione melhor os dados   |
+| Lentidão em joins       | Use broadcast para tabelas pequenas; verifique particionamento |
+| Arquivos muito pequenos | Execute OPTIMIZE nas tabelas Delta                             |
+| Conexão S3/MinIO falha  | Verifique credenciais e endpoint no arquivo .env               |
+| Job travado             | Verifique logs do executor e possíveis deadlocks               |
 
 ## Recursos e Referências
 
