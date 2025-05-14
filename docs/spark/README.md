@@ -4,6 +4,8 @@
 
 O Apache Spark é um framework de processamento distribuído que permite o processamento de grandes volumes de dados de forma rápida e eficiente. No DataFlow Lab, o Spark é integrado com o Delta Lake para fornecer transações ACID, viagem no tempo (time travel) e outras funcionalidades críticas para uma arquitetura de dados moderna.
 
+Última atualização: **13 de maio de 2025**
+
 ## Apache Spark
 
 ### Componentes
@@ -21,11 +23,14 @@ No DataFlow Lab, o Spark é configurado como:
 - **Master**: Nó principal que gerencia os workers
 - **Worker**: Nós que executam o processamento efetivo
 - **History Server**: Para visualização de jobs históricos
+- **Versão**: Apache Spark 3.5.5
+- **Modo de execução**: Standalone
 
 ### Acessando as UIs do Spark
 
 - **Master UI**: [http://localhost:8080](http://localhost:8080)
 - **Worker UI**: [http://localhost:8081](http://localhost:8081)
+- **Autenticação**: Não há autenticação configurada para o ambiente de desenvolvimento
 
 ## Delta Lake
 

@@ -4,7 +4,7 @@
 
 MLflow é uma plataforma de código aberto para gerenciar o ciclo de vida completo de machine learning. No DataFlow Lab, o MLflow é utilizado para rastrear experimentos, gerenciar modelos e facilitar a implementação de modelos de machine learning.
 
-Última atualização: **12 de maio de 2025**
+Última atualização: **13 de maio de 2025**
 
 ## Componentes do MLflow
 
@@ -21,13 +21,16 @@ O MLflow no DataFlow Lab inclui os seguintes componentes principais:
 - **UI**: [http://localhost:5000](http://localhost:5000)
 - **API Python**: Disponível através da biblioteca `mlflow`
 - **API REST**: Disponível em [http://localhost:5000/api](http://localhost:5000/api)
+- **Autenticação**: O MLflow está configurado sem autenticação para ambiente de desenvolvimento local. Em ambientes de produção, recomenda-se configurar autenticação.
 
 ## Configuração no DataFlow Lab
 
 O MLflow está configurado para armazenar:
 
 - **Metadados**: Em um banco de dados SQLite local (`/data/mlflow/mlflow.db`)
-- **Artefatos**: No MinIO (bucket `mlflow`)
+- **Artefatos**: No MinIO (bucket `mlflow`) usando as credenciais AWS configuradas nas variáveis de ambiente:
+  - AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  - AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
 
 ## Registrando Experimentos com MLflow
 

@@ -136,31 +136,6 @@ services:
       - mlflow
       - prefect
 
-  # Apache NiFi
-  nifi:
-    image: apache/nifi:2.4.0
-    container_name: nifi
-    ports:
-      - "8443:8443"
-    environment:
-      - NIFI_WEB_HTTPS_PORT=8443
-      - SINGLE_USER_CREDENTIALS_USERNAME=admin
-      - SINGLE_USER_CREDENTIALS_PASSWORD=admin123
-      - NIFI_SENSITIVE_PROPS_KEY=${NIFI_SENSITIVE_PROPS_KEY:-nifi-key}
-    volumes:
-      - ./data/nifi:/opt/nifi/nifi-current/data
-      - ./config/nifi:/opt/nifi/nifi-current/conf
-    networks:
-      - dataflow-network
-    healthcheck:
-      test: ["CMD", "curl", "-k", "https://localhost:8443/nifi"]
-      interval: 30s
-      timeout: 20s
-      retries: 5
-      start_period: 60s
-    depends_on:
-      - minio
-
   # Streamlit
   streamlit:
     build:
@@ -190,6 +165,52 @@ services:
       timeout: 10s
       retries: 3
 
+  nifi:
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=nifi
+      - SINGLE_USER_CREDENTIALS_PASSWORD=HGd15bvfv8744ghbdhgdv7895agqERAo
+      - TZ=America/Fortaleza
+    image: apache/nifi:2.4.0
+    container_name: apache-nifi
+    ports:
+      - "8443:8443"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.95"
+          memory: 1G
+    restart: on-failure
+    volumes: 
+      - ./nifi/jdbc:/opt/nifi/nifi-current/jdbc  # Mantendo o volume original para compatibilidade
+      - ./nifi/drivers:/opt/nifi/nifi-current/drivers  # Novo volume para organizar drivers por tipo
+      - nifi-logs:/opt/nifi/nifi-current/logs
+      - nifi-conf:/opt/nifi/nifi-current/conf
+      - nifi-state:/opt/nifi/nifi-current/state
+      - nifi-content:/opt/nifi/nifi-current/content_repository
+      - nifi-database:/opt/nifi/nifi-current/database_repository
+      - nifi-flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - nifi-provenance:/opt/nifi/nifi-current/provenance_repository
+    networks:
+      - dataflow-network
+    # Comando inicial para baixar drivers comuns, se necessário
+    command: >
+      bash -c "
+        mkdir -p /opt/nifi/nifi-current/drivers/postgres &&
+        mkdir -p /opt/nifi/nifi-current/drivers/mysql &&
+        mkdir -p /opt/nifi/nifi-current/drivers/mssql &&
+        mkdir -p /opt/nifi/nifi-current/drivers/oracle &&
+        cp /opt/nifi/nifi-current/jdbc/postgresql-42.6.0.jar /opt/nifi/nifi-current/drivers/postgres/ &&
+        /opt/nifi/scripts/start.sh
+      "
+
+volumes:
+    nifi-logs:
+    nifi-conf:
+    nifi-state:
+    nifi-content:
+    nifi-database:
+    nifi-flowfile:
+    nifi-provenance:
 networks:
   dataflow-network:
     driver: bridge

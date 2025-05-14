@@ -5,8 +5,8 @@ O Apache NiFi 2.4.0 é uma plataforma poderosa para automação e gerenciamento 
 
 ## Acesso
 - **URL**: https://localhost:8443/nifi
-- **Usuário**: admin
-- **Senha**: admin123
+- **Usuário**: nifi
+- **Senha**: HGd15bvfv8744ghbdhgdv7895agqERAo
 
 ## Novidades na Versão 2.4.0
 - Melhor desempenho e escalabilidade

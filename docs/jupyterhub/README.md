@@ -4,6 +4,8 @@
 
 [JupyterHub](https://jupyter.org/hub) é uma plataforma multi-usuário para notebooks Jupyter, permitindo que equipes de analistas e cientistas de dados colaborem em um ambiente centralizado. No DataFlow Lab, o JupyterHub serve como o principal ambiente de desenvolvimento para análise exploratória, visualização de dados e prototipagem de modelos de machine learning.
 
+Última atualização: **13 de maio de 2025**
+
 ## Recursos Principais
 
 - **Notebooks Multi-usuário**: Ambiente compartilhado para toda a equipe
@@ -18,10 +20,9 @@
 
 1. Após iniciar o ambiente com `docker-compose up -d`, acesse:
    - URL: http://localhost:8888
-   - Credenciais:
-     - Usuário padrão: `admin`
-     - Senha padrão: `admin`  
-     *(Nota: Altere as credenciais em ambientes de produção)*
+   - Usuário padrão: `jovyan` (usuário configurado no Dockerfile)
+   - Autenticação: Configurada conforme jupyterhub_config.py
+   *(Nota: Em um ambiente de produção, é recomendável configurar um sistema de autenticação adequado)*
 
 ### Principais Funcionalidades
 

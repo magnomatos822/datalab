@@ -4,6 +4,8 @@
 
 O Streamlit é uma biblioteca de código aberto que transforma scripts Python em aplicativos web interativos. No DataFlow Lab, o Streamlit serve como a interface principal para visualização de dados e monitoramento do sistema, oferecendo dashboards interativos e aplicações analíticas que consomem dados processados da camada Gold.
 
+Última atualização: **13 de maio de 2025**
+
 ## Componentes
 
 O Streamlit no DataFlow Lab é implementado como:
@@ -24,6 +26,16 @@ O Streamlit no DataFlow Lab é implementado como:
 1. Inicie os serviços com `docker-compose up -d`
 2. Acesse a interface web em `http://localhost:8501`
 3. Navegue entre as diferentes visualizações usando o menu lateral
+4. Não há autenticação configurada para o ambiente de desenvolvimento local. Para ambientes de produção, recomenda-se implementar autenticação.
+
+### Variáveis de Ambiente Configuradas
+
+O container Streamlit está configurado com as seguintes variáveis de ambiente para acesso aos outros serviços:
+
+- MLFLOW_TRACKING_URI=http://mlflow:5000
+- AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+- AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+- S3_ENDPOINT=http://minio:9000
 
 ### Dashboards Disponíveis
 

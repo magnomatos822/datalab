@@ -4,7 +4,7 @@
 
 [Prefect](https://www.prefect.io/) é uma plataforma moderna de orquestração de fluxos de trabalho para dados. No DataFlow Lab, o Prefect é utilizado para orquestrar, programar e monitorar os fluxos de transformação de dados entre as camadas Bronze, Silver e Gold do nosso Data Lakehouse.
 
-Última atualização: **12 de maio de 2025**
+Última atualização: **13 de maio de 2025**
 
 ## Componentes Principais
 
@@ -22,7 +22,11 @@
 
 1. Após iniciar o ambiente com `docker-compose up -d`, acesse:
    - URL: http://localhost:4200
-   - Não há autenticação por padrão na instalação local
+   - Usuário: Não há autenticação por padrão na instalação local
+   - Configuração de banco de dados: SQLite - `/opt/prefect/prefect.db`
+   - Variáveis de ambiente:
+     - PREFECT_UI_API_URL=http://localhost:4200/api
+     - PREFECT_API_URL=http://localhost:4200/api
 
 ### Criando um Flow Básico
 

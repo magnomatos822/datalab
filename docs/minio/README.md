@@ -4,7 +4,7 @@
 
 O MinIO é um servidor de armazenamento de objetos de alta performance, compatível com a API do Amazon S3. No contexto do DataFlow Lab, o MinIO serve como a camada de armazenamento fundamental para a implementação da arquitetura Medallion (Bronze, Silver, Gold).
 
-Última atualização: **12 de maio de 2025**
+Última atualização: **13 de maio de 2025**
 
 ## Características Principais
 
@@ -29,8 +29,8 @@ O MinIO é configurado com três buckets principais, correspondentes às camadas
 
 - **Console Web**: [http://localhost:9001](http://localhost:9001)
 - **Credenciais**: 
-  - Usuário: `admin`
-  - Senha: `admin123`
+  - Usuário: `${MINIO_ROOT_USER}` (configurado em variável de ambiente)
+  - Senha: `${MINIO_ROOT_PASSWORD}` (configurado em variável de ambiente)
 
 ## Endpoints
 
