@@ -10,8 +10,7 @@
   <img src="https://img.shields.io/static/v1?style=for-the-badge&message=Apache+NiFi&color=728E9B&logo=Apache+NiFi&logoColor=FFFFFF&label=" alt="Apache NiFi">
   <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
   <img src="https://img.shields.io/badge/Airflow-017C74?style=for-the-badge&logo=apache-airflow&logoColor=white" alt="Apache Airflow">
-  <img src="https://img.shields.io/badge/Airbyte-FF4B4B?style=for-the-badge&logo=airbyte&logoColor=white" alt="Airbyte">
-  <img src="https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" alt="Apache Kafka">
+  <img src="https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" alt="Apache Kafka">
 </div>
 
 <br>
@@ -35,9 +34,16 @@
   - [🚀 Início Rápido](#-início-rápido)
     - [Pré-requisitos](#pré-requisitos)
     - [Instalação](#instalação)
+    - [URLs dos Serviços](#urls-dos-serviços)
   - [📂 Estrutura do Projeto](#-estrutura-do-projeto)
-  - [🔄 Integração com Airbyte](#-integração-com-airbyte)
-  - [📈 Analytics com Spark](#-analytics-com-spark)
+  - [📊 Uso do Sistema](#-uso-do-sistema)
+    - [Arquitetura Medallion](#arquitetura-medallion)
+    - [Transações ACID com Delta Lake](#transações-acid-com-delta-lake)
+    - [Fluxo de Dados Típico](#fluxo-de-dados-típico)
+    - [Casos de Uso](#casos-de-uso)
+    - [Exemplos Práticos](#exemplos-práticos)
+  - [🔄 Integração com Apache NiFi](#-integração-com-apache-nifi)
+  - [📈 Analytics com Spark e Kafka](#-analytics-com-spark-e-kafka)
   - [👥 Contribuição](#-contribuição)
   - [📄 Licença](#-licença)
 
@@ -45,7 +51,7 @@
 
 O DataFlow Lab é uma plataforma completa de Data Lakehouse para processamento de dados, abrangendo desde a ingestão de dados brutos até a criação de modelos de machine learning. A arquitetura implementa práticas modernas de engenharia de dados como processamento em camadas (Medallion: Bronze, Silver, Gold), transações ACID através do Delta Lake, rastreabilidade e reprodutibilidade.
 
-Atualizado em: **12 de maio de 2025**
+Atualizado em: **14 de maio de 2025**
 
 ## 🏗️ Arquitetura
 
@@ -69,7 +75,7 @@ Atualizado em: **12 de maio de 2025**
       ▼                ▼                ▼                ▼                 ▼
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                                                                              │
-│                              DATA GOVERNANCE                                 │
+│                         STREAMING (Kafka/Spark)                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
       │                │                │                │                 │
@@ -91,39 +97,52 @@ O sistema é composto por vários componentes integrados que formam uma platafor
   - Console: [http://localhost:9001](http://localhost:9001) (admin/admin123)
   - API: [http://localhost:9000](http://localhost:9000)
   - Buckets: bronze, silver, gold (arquitetura Medallion)
+  - **Versão**: 2025-04-22
 
 ### Ingestão e ETL
-- **[Airbyte](docs/airbyte/README.md)**: Plataforma de integração de dados de código aberto
-  - UI: [http://localhost:8000](http://localhost:8000) (airbyte/password)
-  - Conectores para mais de 300 fontes de dados
+- **[Apache NiFi](docs/nifi/README.md)**: Plataforma para automação de fluxos de dados
+  - UI: [https://localhost:8443](https://localhost:8443) (nifi/senha-configurada)
+  - Drivers JDBC pré-instalados para PostgreSQL, MySQL, Oracle
+  - **Versão**: 2.4.0
 
 ### Processamento de Dados
 - **[Apache Spark](docs/spark/README.md)**: Framework de processamento distribuído
   - Master UI: [http://localhost:8080](http://localhost:8080)
   - Worker UI: [http://localhost:8081](http://localhost:8081)
+  - **Versão**: 3.5.5
 - **[Delta Lake](docs/spark/README.md#delta-lake)**: Camada de armazenamento que traz transações ACID para Spark
   - Formatos: delta (com garantias ACID)
   - Recursos: Time Travel, MERGE, Z-Order, Optimize
+  - **Versão**: 3.3.1
+- **[Apache Kafka](docs/kafka/README.md)**: Plataforma de streaming distribuído
+  - Broker: [localhost:9092](localhost:9092)
+  - Interface: [http://localhost:8090](http://localhost:8090)
+  - **Versão**: 7.5.0
 
 ### Machine Learning
 - **[MLflow](docs/mlflow/README.md)**: Plataforma para gerenciamento do ciclo de vida de ML
   - UI: [http://localhost:5000](http://localhost:5000)
   - Tracking, registros de modelos e serviço
+  - Integração com MinIO para armazenamento de artefatos
+  - **Versão**: 2.22.0
 
 ### Orquestração
 - **[Prefect](docs/prefect/README.md)**: Orquestrador de fluxos de dados
   - UI: [http://localhost:4200](http://localhost:4200)
   - Fluxos, tarefas e monitoramento
+  - **Versão**: 3.4.1
 
 ### Desenvolvimento
-- **[JupyterHub](docs/jupyter/README.md)**: Ambiente de desenvolvimento interativo multi-usuário
+- **[JupyterHub](docs/jupyterhub/README.md)**: Ambiente de desenvolvimento interativo multi-usuário
   - UI: [http://localhost:8888](http://localhost:8888)
   - Notebooks para análise exploratória
+  - **Versão**: 5.3.0
 
 ### Visualização
 - **[Streamlit](docs/streamlit/README.md)**: Framework para criação de aplicações de dados
   - UI: [http://localhost:8501](http://localhost:8501)
   - Dashboards interativos
+  - **Versão**: 1.45.0
 
 ## 🚀 Início Rápido
 
@@ -141,12 +160,20 @@ O sistema é composto por vários componentes integrados que formam uma platafor
    cd dataflow-lab
    ```
 
-2. Inicie os serviços:
+2. Crie um arquivo `.env` com as credenciais necessárias:
+   ```bash
+   echo "MINIO_ROOT_USER=admin" > .env
+   echo "MINIO_ROOT_PASSWORD=admin123" >> .env
+   echo "AWS_ACCESS_KEY_ID=admin" >> .env
+   echo "AWS_SECRET_ACCESS_KEY=admin123" >> .env
+   ```
+
+3. Inicie os serviços:
    ```bash
    docker-compose up -d
    ```
 
-3. Verifique se todos os serviços estão rodando:
+4. Verifique se todos os serviços estão rodando:
    ```bash
    docker-compose ps
    ```
@@ -155,20 +182,90 @@ O sistema é composto por vários componentes integrados que formam uma platafor
    ```bash
    docker-compose logs spark-master
    ```
-   docker-compose ps
-   ```
 
 ### URLs dos Serviços
 
-| Serviço      | URL                   | Credenciais      |
-| ------------ | --------------------- | ---------------- |
-| MinIO        | http://localhost:9001 | admin/admin123   |
-| Airbyte      | http://localhost:8000 | airbyte/password |
-| Spark Master | http://localhost:8080 | -                |
-| MLflow       | http://localhost:5000 | -                |
-| Prefect UI   | http://localhost:4200 | -                |
-| JupyterHub   | http://localhost:8888 | (token nos logs) |
-| Streamlit    | http://localhost:8501 | -                |
+| Serviço      | URL                      | Credenciais      |
+| ------------ | ------------------------ | ---------------- |
+| MinIO        | http://localhost:9001    | admin/admin123   |
+| Apache NiFi  | https://localhost:8443   | nifi/senha-config |
+| Spark Master | http://localhost:8080    | -                |
+| MLflow       | http://localhost:5000    | -                |
+| Prefect UI   | http://localhost:4200    | -                |
+| JupyterHub   | http://localhost:8888    | (token nos logs) |
+| Streamlit    | http://localhost:8501    | -                |
+| Kafka UI     | http://localhost:8090    | -                |
+
+## 📂 Estrutura do Projeto
+
+```
+dataflow-lab/
+│
+├── docker-compose.yml      # Definição dos serviços Docker
+├── jupyterhub_config.py    # Configuração do JupyterHub
+├── README.md               # Este arquivo
+├── LICENSE                 # Licença do projeto
+├── requirements.txt        # Dependências Python (incluindo delta-spark)
+│
+├── app/                    # Código Python da aplicação
+│   ├── analytics.py               # Funções analíticas com Spark
+│   ├── app.py                     # Aplicação principal
+│   ├── medallion_architecture.py  # Implementação da arquitetura Medallion
+│   ├── medallion_example.py       # Exemplo de uso
+│   ├── medallion_prefect_flow.py  # Fluxos Prefect para orquestração
+│   ├── mlflow.py                  # Integrações com MLflow
+│   └── tutorial.py                # Tutoriais e exemplos
+│
+├── docs/                   # Documentação detalhada
+│   ├── airflow/            # Documentação do Airflow
+│   ├── jupyterhub/         # Documentação do JupyterHub
+│   ├── kafka/              # Documentação do Kafka
+│   ├── minio/              # Documentação do MinIO
+│   ├── mlflow/             # Documentação do MLflow
+│   ├── nifi/               # Documentação do NiFi
+│   ├── prefect/            # Documentação do Prefect
+│   ├── spark/              # Documentação do Apache Spark e Delta Lake
+│   └── streamlit/          # Documentação do Streamlit
+│
+├── notebooks/              # Jupyter notebooks de exemplo
+│   ├── jupyterhub_credentials.ipynb # Informações de credenciais
+│   ├── magnomatos822/      # Notebooks do usuário
+│   │   └── amazon.ipynb    # Análise de dados da Amazon
+│   ├── nifi_tutorials/     # Tutoriais do NiFi
+│   └── retail_analysis/    # Análise de dados de varejo
+│
+├── config/                 # Arquivos de configuração
+│   ├── airflow/            # Configurações do Airflow
+│   ├── jupyterhub/         # Configurações do JupyterHub
+│   ├── mlflow/             # Configurações do MLflow
+│   ├── spark/              # Configurações do Spark
+│   │   └── conf/           # Arquivos de configuração do Spark
+│   └── streamlit/          # Configurações do Streamlit
+│
+├── data/                   # Diretório para armazenar dados
+│   ├── airflow/            # Dados do Airflow
+│   ├── jupyter/            # Dados do JupyterHub
+│   ├── minio/              # Buckets do MinIO (bronze, silver, gold)
+│   ├── mlflow/             # Dados do MLflow
+│   ├── nifi/               # Dados do NiFi
+│   ├── postgres/           # Dados do PostgreSQL
+│   ├── prefect/            # Dados do Prefect
+│   └── spark/              # Logs e dados do Spark
+│
+├── flows/                  # Definições de fluxos Prefect
+├── mlruns/                 # Diretório para armazenar artefatos do MLflow
+│   └── models/             # Modelos treinados
+│
+├── models/                 # Modelos exportados
+│
+├── nifi/                   # Recursos para Apache NiFi
+│   ├── drivers/            # Drivers JDBC organizados por tipo de banco
+│   └── jdbc/               # Drivers JDBC gerais
+│
+└── scripts/                # Scripts utilitários
+    ├── download_spark_jars.sh  # Script para baixar JARs do Spark
+    └── init_minio.sh      # Script para inicialização do MinIO
+```
 
 ## 📊 Uso do Sistema
 
@@ -202,7 +299,7 @@ O projeto implementa o Delta Lake para fornecer garantias ACID (Atomicidade, Con
 
 ### Fluxo de Dados Típico
 
-1. **Ingestão de Dados**: Coleta de dados de fontes diversas (APIs, bancos de dados, arquivos) usando Airbyte ou métodos personalizados
+1. **Ingestão de Dados**: Coleta de dados de fontes diversas (APIs, bancos de dados, arquivos) usando NiFi
 2. **Armazenamento Bronze**: Armazenamento dos dados brutos no formato Delta Lake (MinIO)
 3. **Processamento Silver**: Limpeza e transformação com Apache Spark
 4. **Refinamento Gold**: Agregações e modelagem para análise
@@ -219,7 +316,7 @@ O DataFlow Lab foi projetado para suportar diversos casos de uso:
 - **Análise financeira**: Processamento de séries temporais e dados financeiros
 - **Processamento de logs**: Análise de logs e telemetria
 - **Integração de dados**: Unificação de fontes de dados heterogêneas
-- **Analytics em tempo real**: Processamento de streaming com Spark Structured Streaming
+- **Analytics em tempo real**: Processamento de streaming com Kafka e Spark Structured Streaming
 
 ### Exemplos Práticos
 
@@ -233,104 +330,57 @@ Consulte nossos exemplos para casos de uso comuns:
 Para executar o exemplo da arquitetura Medallion:
 
 ```bash
-docker exec -it spark-master python /spark-apps/medallion_prefect_flow.py
+docker exec -it spark-master python /opt/spark-apps/medallion_prefect_flow.py
 ```
 
-## 📂 Estrutura do Projeto
+## 🔄 Integração com Apache NiFi
 
+O DataFlow Lab utiliza o Apache NiFi (2.4.0) para ingestão e transformação de dados. As principais características da integração são:
+
+- **Interface segura**: Acesso via HTTPS em https://localhost:8443
+- **Drivers pré-configurados**: PostgreSQL, MySQL, MS SQL Server e Oracle
+- **Fluxos de exemplo**: Disponíveis na pasta `nifi/templates`
+- **Organização por tipo**: Drivers organizados por tipo de banco de dados
+
+Para acessar o Apache NiFi:
+
+1. Acesse [https://localhost:8443/nifi](https://localhost:8443/nifi)
+2. Utilize as credenciais configuradas (padrão: nifi/senha-configurada)
+3. Importe templates ou crie novos fluxos
+
+Exemplo de NiFi para enviar dados para o Data Lake:
 ```
-dataflow-lab/
-│
-├── docker-compose.yml      # Definição dos serviços Docker
-├── jupyterhub_config.py    # Configuração do JupyterHub
-├── README.md               # Este arquivo
-├── LICENSE                 # Licença do projeto
-├── requirements.txt        # Dependências Python (incluindo delta-spark)
-│
-├── app/                    # Código Python da aplicação
-│   ├── airbyte_integration.py     # Integração com Airbyte
-│   ├── airbyte_monitoring.py      # Monitoramento de conexões Airbyte
-│   ├── airbyte_prefect_deployment.py  # Integração Airbyte + Prefect
-│   ├── analytics.py               # Funções analíticas com Spark
-│   ├── app.py                     # Aplicação principal
-│   ├── ingestion.py               # Módulo de ingestão de dados
-│   ├── medallion_architecture.py  # Implementação da arquitetura Medallion
-│   ├── medallion_example.py       # Exemplo de uso
-│   ├── medallion_prefect_flow.py  # Fluxos Prefect para orquestração
-│   └── processor.py               # Processamento de dados com Spark
-│
-├── docs/                   # Documentação detalhada
-│   ├── airbyte/            # Documentação do Airbyte
-│   ├── minio/              # Documentação do MinIO
-│   ├── spark/              # Documentação do Apache Spark e Delta Lake
-│   ├── mlflow/             # Documentação do MLflow
-│   ├── prefect/            # Documentação do Prefect
-│   └── jupyter/            # Documentação do Jupyter
-│
-├── notebooks/              # Jupyter notebooks de exemplo
-│   ├── magnomatos822/      # Notebooks do usuário
-│   │   ├── amazon.ipynb    # Análise de dados da Amazon
-│   │   └── teste.ipynb     # Notebook de testes
-│   └── tutorials/          # Notebooks de tutoriais
-│
-├── config/                 # Arquivos de configuração
-│   ├── minio/              # Configurações do MinIO
-│   ├── spark/              # Configurações do Spark
-│   └── nginx/              # Configurações do NGINX
-│
-├── data/                   # Diretório para armazenar dados
-│   ├── jupyter/            # Dados do JupyterHub
-│   ├── minio/              # Buckets do MinIO (bronze, silver, gold)
-│   ├── mlflow/             # Dados do MLflow
-│   ├── prefect/            # Dados do Prefect
-│   ├── spark/              # Logs e dados do Spark
-│   └── streamlit/          # Dados do Streamlit
-│
-├── flows/                  # Definições de fluxos Prefect
-├── mlruns/                 # Diretório para armazenar artefatos do MLflow
-│   └── models/             # Modelos treinados
-│
-└── models/                 # Modelos exportados
+GetFile -> ExtractText -> ConvertJSONtoSQL -> PutS3Object
 ```
 
-## 🔄 Integração com Airbyte
+## 📈 Analytics com Spark e Kafka
 
-O DataFlow Lab integra-se com o Airbyte para ingestão de dados de diversas fontes. Os principais componentes de integração são:
+O componente de analytics (`app/analytics.py`) fornece funções para análise de dados avançada, agora com integrações Kafka:
 
-- **airbyte_integration.py**: Fornece APIs para interagir com o Airbyte
-- **airbyte_monitoring.py**: Monitora o status das conexões e sincronizações
-- **airbyte_prefect_deployment.py**: Integra fluxos de dados do Airbyte com orquestração Prefect
+- **Análise em tempo real**: Processamento de eventos em tempo real com Kafka
+- **Análise de séries temporais**: Previsões e detecção de tendências
+- **Detecção de anomalias**: Identificação de padrões incomuns
+- **Análise de sentimento**: Processamento de texto com NLP
+- **Analytics preditivos**: Modelos de machine learning avançados
 
-Para configurar uma nova fonte de dados:
-
-1. Acesse a UI do Airbyte em http://localhost:8000
-2. Configure a fonte de dados desejada
-3. Configure o destino como MinIO (Bronze layer)
-4. Crie uma conexão entre fonte e destino
-5. Use os scripts de integração para automatizar o processo
-
-## 📈 Analytics com Spark
-
-O componente de analytics (`app/analytics.py`) fornece funções para análise de dados avançada:
-
-- Análise de séries temporais
-- Detecção de anomalias
-- Análise de sentimento
-- Processamento de linguagem natural
-- Análises preditivas
-
-Exemplo de uso:
+Exemplo de uso com Kafka:
 
 ```python
-from app.analytics import TimeSeriesAnalyzer
+from app.analytics import StreamProcessor
 
-# Carregar dados da camada Gold
-data = spark.read.format("delta").load("s3a://gold/stock_data")
+# Configurar processador de streaming
+processor = StreamProcessor(
+    bootstrap_servers="kafka:9092",
+    input_topic="raw_data",
+    output_topic="processed_data"
+)
 
-# Realizar análise de séries temporais
-analyzer = TimeSeriesAnalyzer(data)
-results = analyzer.analyze(metric="close_price", period=30)
-forecast = analyzer.forecast(days=7)
+# Definir transformação
+def transform(df):
+    return df.withColumn("processed_value", df.value * 2)
+
+# Iniciar processamento
+processor.start_processing(transform)
 ```
 
 ## 👥 Contribuição

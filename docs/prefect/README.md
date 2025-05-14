@@ -1,291 +1,441 @@
-# Prefect no DataFlow Lab
+# Prefect - Orquestração de Fluxos de Dados
 
-## Visão Geral
+<div align="center">
+  <img src="https://img.shields.io/badge/Prefect-024DFD?style=for-the-badge&logo=prefect&logoColor=white" alt="Prefect">
+</div>
 
-[Prefect](https://www.prefect.io/) é uma plataforma moderna de orquestração de fluxos de trabalho para dados. No DataFlow Lab, o Prefect é utilizado para orquestrar, programar e monitorar os fluxos de transformação de dados entre as camadas Bronze, Silver e Gold do nosso Data Lakehouse.
+> Versão: 3.4.1
 
-Última atualização: **13 de maio de 2025**
+## O que é o Prefect?
 
-## Componentes Principais
+Prefect é uma moderna plataforma de orquestração de fluxos de trabalho para coordenar pipelines de dados e ML. Diferente de orquestradores tradicionais, o Prefect traz observabilidade, tratamento de erros avançado, escalonamento dinâmico, e uma abordagem orientada a eventos, perfeita para fluxos de dados complexos.
 
-- **Flows**: Unidades fundamentais de trabalho no Prefect, representam sua lógica de negócios
-- **Tasks**: Unidades atômicas dentro de um flow, realizando operações específicas
-- **Schedules**: Programação de execução de flows em intervalos definidos
-- **UI Web**: Interface para visualizar, monitorar e gerenciar execuções
-- **API**: Permite integração com outras ferramentas e sistemas
-- **Work Queues**: Gerenciamento e distribuição de trabalho entre workers
-- **Block Storage**: Armazenamento de configurações e segredos de forma segura
+## Características do Prefect
 
-## Como Utilizar
+- **Execução Dinâmica**: Fluxos que se adaptam às entradas e condições
+- **Tratamento Robusto de Falhas**: Políticas de retry, exceções personalizadas
+- **Observabilidade**: Monitoramento e logs detalhados
+- **Orquestração Moderna**: Baseada em funções Python nativas (Taskflow API)
+- **Escalonável**: Da execução local à distribuída
 
-### Acessando a Interface Web do Prefect
+## Como Acessar
 
-1. Após iniciar o ambiente com `docker-compose up -d`, acesse:
-   - URL: http://localhost:4200
-   - Usuário: Não há autenticação por padrão na instalação local
-   - Configuração de banco de dados: SQLite - `/opt/prefect/prefect.db`
-   - Variáveis de ambiente:
-     - PREFECT_UI_API_URL=http://localhost:4200/api
-     - PREFECT_API_URL=http://localhost:4200/api
+O Prefect está disponível em:
 
-### Criando um Flow Básico
+- **URL**: http://localhost:4200
+- **API URL**: http://localhost:4200/api (para clientes)
 
-Aqui está um exemplo de como criar um flow Prefect básico para processar dados entre as camadas Bronze e Silver:
+## Configuração no DataLab
+
+No DataFlow Lab, o Prefect está configurado como:
+
+- **Backend**: SQLite (para desenvolvimento)
+- **Storage**: Sistema de arquivos local (data/prefect)
+- **Volumes mapeados**:
+  - Dados: `./data:/opt/prefect/data`
+  - Fluxos: `./flows:/opt/prefect/flows`
+  - Configuração: `./data/prefect:/opt/prefect`
+
+## Conceitos Básicos
+
+### 1. Fluxos (Flows)
+
+Fluxos são a unidade principal de trabalho no Prefect. Um fluxo é uma coleção de tarefas organizadas para atingir um objetivo específico:
 
 ```python
 from prefect import flow, task
-from pyspark.sql import SparkSession
-from datetime import datetime
-import os
 
-@task(name="Iniciar Spark Session")
-def start_spark_session():
-    """Inicializa e retorna uma sessão Spark"""
-    spark = (SparkSession.builder
-             .appName("Bronze-to-Silver")
-             .config("spark.jars.packages", "io.delta:delta-core_2.12:2.3.0")
-             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-             .getOrCreate())
-    return spark
+@task
+def extrair():
+    # Extrai dados da fonte
+    return dados
 
-@task(name="Ler da Camada Bronze")
-def read_from_bronze(spark, source_table):
-    """Lê dados da camada Bronze"""
-    bronze_path = f"s3a://bronze/{source_table}"
-    df = spark.read.format("delta").load(bronze_path)
-    return df
+@task
+def transformar(dados):
+    # Transforma os dados
+    return dados_transformados
 
-@task(name="Aplicar Transformações")
-def apply_transformations(df):
-    """Aplica transformações nos dados"""
-    # Exemplo de transformações simples
-    from pyspark.sql.functions import col, to_date
-    
-    df_transformed = (df
-                     .drop("_airbyte_ab_id", "_airbyte_emitted_at")
-                     .withColumn("created_date", to_date(col("created_at")))
-                     .filter(col("status") != "deleted"))
-    
-    return df_transformed
+@task
+def carregar(dados):
+    # Carrega os dados no destino
+    return "Sucesso!"
 
-@task(name="Escrever na Camada Silver")
-def write_to_silver(df, target_table):
-    """Escreve dados transformados na camada Silver"""
-    silver_path = f"s3a://silver/{target_table}"
-    
-    (df.write
-       .format("delta")
-       .mode("overwrite")
-       .save(silver_path))
-    
-    return silver_path
+@flow(name="ETL Simples")
+def etl_pipeline():
+    dados = extrair()
+    dados_transformados = transformar(dados)
+    resultado = carregar(dados_transformados)
+    return resultado
 
-@flow(name="Bronze-to-Silver ETL")
-def bronze_to_silver_flow(source_table: str, target_table: str):
-    """Flow principal para processar dados de Bronze para Silver"""
-    # Execute tasks em sequência
-    spark = start_spark_session()
-    raw_data = read_from_bronze(spark, source_table)
-    transformed_data = apply_transformations(raw_data)
-    silver_path = write_to_silver(transformed_data, target_table)
-    
-    # Encerra a sessão Spark
-    spark.stop()
-    
-    return {"status": "success", "silver_path": silver_path}
-
-# Exemplo de uso
 if __name__ == "__main__":
-    bronze_to_silver_flow("vendas", "vendas_processed")
+    etl_pipeline()
 ```
 
-### Registrando e Programando Flows
+### 2. Tarefas (Tasks)
 
-Para executar seus flows automaticamente em uma programação:
+Tarefas são as unidades atômicas de trabalho dentro de um fluxo:
+
+- Podem depender umas das outras
+- Têm estado (executando, concluído, falha)
+- Suportam retentativas e timeout
+- Podem ser paralelizadas
+
+### 3. Deployments
+
+Deployments permitem agendar e acionar fluxos a partir da interface:
 
 ```python
 from prefect.deployments import Deployment
-from prefect.orion.schemas.schedules import CronSchedule
-from bronze_to_silver import bronze_to_silver_flow
+from prefect.server.schemas.schedules import CronSchedule
 
-# Cria um deployment com agendamento
+# Criar deployment
 deployment = Deployment.build_from_flow(
-    flow=bronze_to_silver_flow,
-    name="Bronze-to-Silver-Daily",
-    parameters={"source_table": "vendas", "target_table": "vendas_processed"},
-    schedule=CronSchedule(cron="0 2 * * *"),  # Executa às 2h da manhã todos os dias
-    tags=["etl", "bronze-to-silver"]
+    flow=etl_pipeline,
+    name="etl-agendado",
+    schedule=CronSchedule(cron="0 0 * * *"),  # Diariamente à meia-noite
+    tags=["produção", "etl"]
 )
 
-# Aplica o deployment
+# Aplicar deployment
 if __name__ == "__main__":
     deployment.apply()
 ```
 
-### Integração dos Fluxos Medallion no Prefect
+## Exemplos Práticos
 
-Para implementar o padrão Medallion completo no Prefect, crie fluxos para cada transição entre camadas:
+### Arquitetura Medallion com Prefect
 
-1. **Airbyte → Bronze**: Orquestrando extrações do Airbyte para a camada Bronze
-2. **Bronze → Silver**: Aplicando limpeza, validação e transformações iniciais
-3. **Silver → Gold**: Criando visões agregadas e modelos para análise de negócios
-
-## Integração com MLflow
-
-O Prefect pode ser facilmente integrado com MLflow para orquestrar pipelines de machine learning:
+Exemplo de como implementar a arquitetura Medallion usando Prefect:
 
 ```python
 from prefect import flow, task
-import mlflow
-from mlflow.tracking import MlflowClient
+from pyspark.sql import SparkSession
+import datetime como dt
+
+@task(name="Inicializar Spark")
+def iniciar_spark():
+    # Configurar sessão Spark com Delta Lake
+    spark = SparkSession.builder \
+        .appName("Medallion-Pipeline") \
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
+        .config("spark.hadoop.fs.s3a.access.key", "admin") \
+        .config("spark.hadoop.fs.s3a.secret.key", "admin123") \
+        .config("spark.hadoop.fs.s3a.path.style.access", "true") \
+        .getOrCreate()
+    return spark
+
+@task(name="Bronze: Ingestão")
+def bronze_layer(spark, fonte, destino):
+    # Carregar dados brutos
+    df = spark.read.json(fonte)
+    
+    # Adicionar metadados
+    df = df.withColumn("data_ingestao", lit(dt.datetime.now().isoformat()))
+    
+    # Salvar na camada Bronze
+    df.write.format("delta") \
+        .mode("append") \
+        .option("mergeSchema", "true") \
+        .save(destino)
+    
+    return destino
+
+@task(name="Silver: Limpeza")
+def silver_layer(spark, fonte_bronze, destino_silver):
+    # Ler dados da Bronze
+    df = spark.read.format("delta").load(fonte_bronze)
+    
+    # Aplicar transformações
+    df_clean = df.dropna() \
+        .filter("valor > 0") \
+        .withColumn("data_processamento", lit(dt.datetime.now().isoformat()))
+    
+    # Salvar na Silver
+    df_clean.write.format("delta") \
+        .mode("overwrite") \
+        .partitionBy("data") \
+        .save(destino_silver)
+    
+    return destino_silver
+
+@task(name="Gold: Agregações")
+def gold_layer(spark, fonte_silver, destino_gold):
+    # Ler dados da Silver
+    df = spark.read.format("delta").load(fonte_silver)
+    
+    # Criar visão agregada
+    df_agg = df.groupBy("regiao", "data") \
+        .agg(sum("valor").alias("total_valor"))
+    
+    # Salvar na Gold
+    df_agg.write.format("delta") \
+        .mode("overwrite") \
+        .save(destino_gold)
+    
+    return destino_gold
+
+@flow(name="Pipeline Medallion")
+def medallion_pipeline(fonte="s3a://raw/eventos"):
+    spark = iniciar_spark()
+    
+    bronze_path = bronze_layer(
+        spark, 
+        fonte, 
+        "s3a://bronze/raw_data_source1/eventos"
+    )
+    
+    silver_path = silver_layer(
+        spark, 
+        bronze_path, 
+        "s3a://silver/clean_data_domain1/eventos"
+    )
+    
+    gold_path = gold_layer(
+        spark, 
+        silver_path, 
+        "s3a://gold/analytics_domain1/eventos_por_regiao"
+    )
+    
+    return {"bronze": bronze_path, "silver": silver_path, "gold": gold_path}
+
+# Criar deployment
+if __name__ == "__main__":
+    from prefect.deployments import Deployment
+    from prefect.server.schemas.schedules import IntervalSchedule
+    from datetime import timedelta
+    
+    deployment = Deployment.build_from_flow(
+        flow=medallion_pipeline,
+        name="pipeline-medallion-diario",
+        schedule=IntervalSchedule(interval=timedelta(days=1)),
+        tags=["medalion", "etl", "producao"]
+    )
+    
+    deployment.apply()
+```
+
+### Notificações e Alertas
+
+```python
+from prefect import flow
+from prefect.blocks.notifications import SlackWebhook
+
+# Configurar notificação Slack
+slack_webhook_block = SlackWebhook.load("nome-do-block")
+
+@flow(name="Flow com Notificações")
+def flow_com_notificacao():
+    try:
+        # Lógica do fluxo
+        resultado = processar_dados()
+        
+        # Notificação de sucesso
+        slack_webhook_block.notify(f"Fluxo concluído com sucesso: {resultado}")
+        
+        return resultado
+    except Exception as e:
+        # Notificação de falha
+        slack_webhook_block.notify(f"Falha no fluxo: {e}")
+        raise
+```
+
+### Paralelismo e Concorrência
+
+```python
+from prefect import flow, task
+import asyncio
 
 @task
-def treinar_modelo(data_path, params):
-    """Treina um modelo ML e registra no MLflow"""
-    mlflow.set_experiment("modelo_previsao")
+def processar_chunk(chunk):
+    # Processa um pedaço dos dados
+    return len(chunk)
+
+@flow(name="Processamento Paralelo")
+async def processar_em_paralelo(dados):
+    # Dividir dados em chunks
+    chunks = [dados[i:i+100] for i in range(0, len(dados), 100)]
     
-    with mlflow.start_run() as run:
-        # Registrar parâmetros
+    # Processar chunks em paralelo (até 5 ao mesmo tempo)
+    resultados = await asyncio.gather(*[processar_chunk.submit(chunk) for chunk in chunks])
+    
+    return sum(resultados)
+```
+
+## Integração com Outros Serviços
+
+### 1. Prefect + Spark
+
+```python
+@task(name="Executar Job Spark")
+def executar_spark_job(app_name, data_path):
+    # Configurar sessão Spark
+    spark = SparkSession.builder \
+        .appName(app_name) \
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+        .getOrCreate()
+    
+    # Processar dados
+    df = spark.read.parquet(data_path)
+    resultado = df.groupBy("categoria").count()
+    
+    return resultado.count()
+```
+
+### 2. Prefect + MLflow
+
+```python
+from prefect import task, flow
+import mlflow
+
+@task(name="Treinar Modelo")
+def treinar_modelo(params, data_path):
+    # Configurar MLflow
+    mlflow.set_tracking_uri("http://mlflow:5000")
+    mlflow.set_experiment("meu-experimento")
+    
+    # Treinar com tracking
+    with mlflow.start_run():
         mlflow.log_params(params)
         
-        # Treinar modelo (exemplo simplificado)
-        modelo = train_model_function(data_path, params)
+        # Lógica de treino
+        model = treinar(params, data_path)
         
-        # Registrar métricas
-        metrics = evaluate_model(modelo)
-        mlflow.log_metrics(metrics)
+        # Log métricas e modelo
+        mlflow.log_metrics({"acuracia": model.acuracia})
+        mlflow.sklearn.log_model(model, "modelo")
         
-        # Salvar modelo
-        mlflow.sklearn.log_model(modelo, "model")
-        
-        return run.info.run_id, metrics
+        return model.acuracia
 
-@task
-def registrar_modelo(run_id, metrics, min_accuracy=0.75):
-    """Registra o modelo no Model Registry se atender aos critérios"""
-    if metrics["accuracy"] >= min_accuracy:
-        client = MlflowClient()
-        model_uri = f"runs:/{run_id}/model"
-        model_details = mlflow.register_model(model_uri, "modelo_producao")
-        return {"status": "registered", "version": model_details.version}
-    else:
-        return {"status": "rejected", "accuracy": metrics["accuracy"]}
-
-@flow(name="ML Training Pipeline")
-def ml_training_pipeline(data_path, params):
-    """Flow de treinamento e registro de modelo ML"""
-    run_id, metrics = treinar_modelo(data_path, params)
-    registro = registrar_modelo(run_id, metrics)
-    return registro
+@flow(name="Fluxo de ML")
+def pipeline_ml(params={"alpha": 0.5}):
+    acuracia = treinar_modelo(params, "s3a://silver/dados_treino")
+    return acuracia
 ```
 
-## Paralelismo e Concorrência
+### 3. Prefect + Kafka
 
-O Prefect suporta execução paralela e distribuída de fluxos de trabalho:
+```python
+from prefect import task, flow
+from kafka import KafkaConsumer, KafkaProducer
+import json
+
+@task(name="Consumir Mensagens Kafka")
+def consumir_kafka(topico, limite=100):
+    mensagens = []
+    consumer = KafkaConsumer(
+        topico,
+        bootstrap_servers=["kafka:9092"],
+        value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+        auto_offset_reset='earliest',
+        consumer_timeout_ms=10000  # 10 segundos
+    )
+    
+    for i, mensagem in enumerate(consumer):
+        if i >= limite:
+            break
+        mensagens.append(mensagem.value)
+    
+    return mensagens
+
+@task(name="Processar Mensagens")
+def processar_mensagens(mensagens):
+    # Processar as mensagens
+    return [processar(msg) for msg in mensagens]
+
+@task(name="Publicar Resultados")
+def publicar_resultados(resultados, topico):
+    producer = KafkaProducer(
+        bootstrap_servers=["kafka:9092"],
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+    
+    for resultado in resultados:
+        producer.send(topico, value=resultado)
+    
+    producer.flush()
+    return len(resultados)
+
+@flow(name="Pipeline Kafka")
+def pipeline_kafka(topico_entrada, topico_saida, limite=100):
+    mensagens = consumir_kafka(topico_entrada, limite)
+    resultados = processar_mensagens(mensagens)
+    total_publicados = publicar_resultados(resultados, topico_saida)
+    return total_publicados
+```
+
+## Monitoramento e Observabilidade
+
+### Dashboard do Prefect
+
+O Dashboard do Prefect oferece:
+
+- Visualização de fluxos em execução
+- Histórico de execuções
+- Logs detalhados
+- Estado das tarefas
+- Agendamento e gatilhos
+
+### Logs e Alertas
+
+Para configurar logs específicos:
 
 ```python
 from prefect import flow, task
-import time
-from prefect.task_runners import ConcurrentTaskRunner
+import logging
 
-@task
-def processar_batch(batch_id):
-    """Processa um lote de dados"""
-    time.sleep(2)  # Simulando processamento
-    return f"Batch {batch_id} processado"
+# Configurar logger
+logger = logging.getLogger("meu-flow")
+logger.setLevel(logging.INFO)
 
-@flow(name="Processamento Paralelo", task_runner=ConcurrentTaskRunner())
-def processamento_paralelo():
-    """Flow com execução paralela de tasks"""
-    # Submete 10 tasks para execução paralela
-    resultados = []
-    for i in range(10):
-        resultado = processar_batch.submit(i)
-        resultados.append(resultado)
-    
-    # Espera todos os resultados
-    return [r.result() for r in resultados]
+@task(name="Tarefa com Logs")
+def tarefa_logging():
+    logger.info("Iniciando processamento")
+    try:
+        # Lógica
+        logger.info("Processamento concluído")
+    except Exception as e:
+        logger.error(f"Erro no processamento: {e}")
+        raise
 ```
 
-## Armazenamento de Configurações com Block Storage
+## Melhores Práticas
 
-O Prefect 2.0 introduziu o conceito de Blocks para armazenamento de configurações:
+1. **Reutilização de Tarefas**:
+   - Crie tarefas genéricas para operações comuns
+   - Use parâmetros para flexibilidade
 
-```python
-from prefect.blocks.system import Secret
-from prefect_aws import S3Bucket
+2. **Tratamento de Erros**:
+   - Configure políticas de retry para tarefas sensíveis
+   - Use exceções personalizadas
 
-# Registrar um segredo
-secret_block = Secret.load("minio-credentials")
-access_key = secret_block.get()
+3. **Agendamento Eficiente**:
+   - Prefira intervalos maiores quando possível
+   - Use cron para agendamentos precisos
 
-# Configurar acesso ao S3/MinIO
-s3_block = S3Bucket(
-    bucket_path="silver",
-    credentials={
-        "access_key": access_key,
-        "secret_key": secret_block.get(),
-    }
-)
-s3_block.save("minio-silver")
+4. **Otimizando Performance**:
+   - Particione grandes conjuntos de dados
+   - Use dask ou ray para processamento paralelo intenso
 
-# Usar em um flow
-@flow
-def acessar_dados():
-    bucket = S3Bucket.load("minio-silver")
-    data = bucket.read_path("data/vendas.csv")
-    return data
-```
+5. **Métricas e Telemetria**:
+   - Log métricas importantes em cada execução
+   - Configure health checks para pipelines críticos
 
-## Boas Práticas
+## Resolução de Problemas
 
-- **Idempotência**: Projete seus flows para serem idempotentes, executando múltiplas vezes com o mesmo resultado
-- **Tratamento de Falhas**: Use `retry` e `timeout` para gerenciar falhas nas tasks
-- **Parâmetros**: Utilize parâmetros para tornar seus flows reutilizáveis
-- **Notificações**: Configure notificações para falhas em flows críticos
-- **Monitoramento**: Utilize a interface web para monitorar o estado dos flows
-- **Armazenamento de Estado**: Configure armazenamento persistente para estado dos flows
-- **Versionamento**: Mantenha flows versionados em controle de código
-- **Documentação**: Documente flows com docstrings e anotações
-
-## Log e Monitoramento Avançado
-
-```python
-from prefect import flow, task
-from prefect import get_run_logger
-
-@task
-def processar_dados(data):
-    logger = get_run_logger()
-    logger.info(f"Iniciando processamento de {len(data)} registros")
-    
-    # Processamento
-    result = transform_data(data)
-    
-    logger.info(f"Processamento concluído: {len(result)} registros processados")
-    return result
-
-@flow(log_prints=True)
-def pipeline_processo():
-    print("Iniciando pipeline de processamento")
-    dados = carregar_dados()
-    resultado = processar_dados(dados)
-    print(f"Pipeline concluído com {len(resultado)} resultados")
-```
-
-## Solução de Problemas
-
-- **Falha na Conexão**: Verifique se todos os serviços estão em execução (`docker-compose ps`)
-- **Erro em Tasks**: Inspecione os logs detalhados na interface web do Prefect
-- **Problemas com Spark**: Verifique se as configurações do Spark estão corretas para seu ambiente
-- **Tasks Bloqueadas**: Verifique por deadlocks ou recursos insuficientes
-- **Falhas de Implantação**: Confirme que o worker está corretamente configurado e conectado
+| Problema | Solução |
+|----------|---------|
+| Flow travado | Verifique os logs e o status na UI do Prefect |
+| Erros de conexão | Confirme que o servidor Prefect está acessível |
+| Falhas em tarefas específicas | Use a opção de retry e verifique as dependências |
+| Problemas de permissão | Verifique permissões nos volumes compartilhados |
+| Prefect UI inacessível | Verifique se o container está rodando: `docker-compose ps prefect` |
 
 ## Recursos Adicionais
 
 - [Documentação Oficial do Prefect](https://docs.prefect.io/)
-- [Prefect API Reference](https://docs.prefect.io/api-ref/)
-- [Repositório GitHub do Prefect](https://github.com/PrefectHQ/prefect)
-- [Comunidade Prefect no Slack](https://prefect.io/slack)
-- [Prefect Cloud](https://app.prefect.cloud/) (para ambientes de produção)
+- [Prefect Discourse](https://discourse.prefect.io/)
+- [Exemplos no GitHub do Prefect](https://github.com/PrefectHQ/prefect-recipes)
+- [Integração Prefect com Delta Lake](https://github.com/PrefectHQ/prefect-recipes/tree/main/nlp-recipes)
+- [Exemplos DataFlow Lab](../../app/medallion_prefect_flow.py)

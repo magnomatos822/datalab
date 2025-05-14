@@ -1,312 +1,223 @@
-# MLflow no DataFlow Lab
+# MLflow - Gerenciamento do Ciclo de Vida de Machine Learning
 
-## Visão Geral
+![MLflow](https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=mlflow&logoColor=white)
 
-MLflow é uma plataforma de código aberto para gerenciar o ciclo de vida completo de machine learning. No DataFlow Lab, o MLflow é utilizado para rastrear experimentos, gerenciar modelos e facilitar a implementação de modelos de machine learning.
+> Versão: 2.22.0
 
-Última atualização: **13 de maio de 2025**
+## O que é MLflow?
 
-## Componentes do MLflow
+MLflow é uma plataforma de código aberto para gerenciar o ciclo de vida completo de machine learning. Ele permite rastrear experimentos, empacotar código em formatos reproduzíveis e compartilhar e implantar modelos.
 
-O MLflow no DataFlow Lab inclui os seguintes componentes principais:
+## Componentes Principais
 
-1. **MLflow Tracking**: Registra e consulta experimentos, incluindo parâmetros, métricas, código e artefatos
-2. **MLflow Projects**: Empacota código em formato reproduzível
-3. **MLflow Models**: Gerencia e implanta modelos em diversos ambientes
-4. **MLflow Registry**: Gerencia o ciclo de vida completo do modelo
-5. **MLflow Pipelines**: Implementa fluxos de trabalho padronizados para ML (novo)
+O MLflow oferece os seguintes componentes principais:
 
-## Acessando o MLflow
+1. **MLflow Tracking**: Acompanhamento de experimentos para registrar e comparar parâmetros e resultados
+2. **MLflow Projects**: Empacotamento de código ML em formato reproduzível
+3. **MLflow Models**: Convenção para empacotamento de modelos em diversos formatos de ML
+4. **MLflow Registry**: Armazenamento centralizado para gerenciar o ciclo de vida completo do modelo
 
-- **UI**: [http://localhost:5000](http://localhost:5000)
-- **API Python**: Disponível através da biblioteca `mlflow`
-- **API REST**: Disponível em [http://localhost:5000/api](http://localhost:5000/api)
-- **Autenticação**: O MLflow está configurado sem autenticação para ambiente de desenvolvimento local. Em ambientes de produção, recomenda-se configurar autenticação.
+## Como Acessar
 
-## Configuração no DataFlow Lab
+O MLflow está disponível em:
 
-O MLflow está configurado para armazenar:
+- **URL**: http://localhost:5000
+- **Tracking URI**: `http://mlflow:5000` (dentro dos contêineres)
+- **Default Artifact Location**: `s3://mlflow/`
 
-- **Metadados**: Em um banco de dados SQLite local (`/data/mlflow/mlflow.db`)
-- **Artefatos**: No MinIO (bucket `mlflow`) usando as credenciais AWS configuradas nas variáveis de ambiente:
-  - AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-  - AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+## Integração com o DataLab
 
-## Registrando Experimentos com MLflow
+No DataFlow Lab, o MLflow está configurado para:
 
-### Exemplo Básico
+1. Usar o MinIO como armazenamento de artefatos (compatível com S3)
+2. Utilizar SQLite como backend store (adequado para desenvolvimento)
+3. Integrar-se com o ambiente Spark para modelos de ML escaláveis
+
+## Estrutura de Armazenamento
+
+```
+data/mlflow/
+└── db/
+    └── mlflow.db     # Banco de dados SQLite para metadados
+
+mlruns/                # Experimentos e artefatos locais
+└── models/            # Diretório para modelos registrados
+```
+
+## Uso Básico
+
+### Rastrear um Experimento
 
 ```python
 import mlflow
-
-# Iniciar experimento
-mlflow.set_experiment("meu_experimento")
-
-# Iniciar execução
-with mlflow.start_run():
-    # Parâmetros do modelo
-    mlflow.log_param("alpha", 0.5)
-    mlflow.log_param("l1_ratio", 0.1)
-    
-    # Métrica do modelo
-    mlflow.log_metric("rmse", 0.876)
-    mlflow.log_metric("r2", 0.923)
-    
-    # Artefato (como o modelo)
-    mlflow.sklearn.log_model(model, "modelo")
-```
-
-### Monitorando Hiperparâmetros
-
-```python
-from sklearn.model_selection import GridSearchCV
 import mlflow.sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+import pandas as pd
 
-# Definir grade de parâmetros
-param_grid = {
-    'alpha': [0.1, 0.5, 1.0],
-    'l1_ratio': [0.1, 0.5, 0.9]
-}
+# Definir o servidor de rastreamento
+mlflow.set_tracking_uri("http://localhost:5000")
 
-# Configurar grid search
-grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error')
+# Iniciar um experimento
+mlflow.set_experiment("exemplo-regressao")
 
-# Executar com rastreamento MLflow
-with mlflow.start_run(run_name="grid_search"):
-    grid_search.fit(X_train, y_train)
-    
-    # Registrar melhor modelo
-    mlflow.log_params(grid_search.best_params_)
-    mlflow.log_metric("best_score", grid_search.best_score_)
-    mlflow.sklearn.log_model(grid_search.best_estimator_, "best_model")
-```
+# Carregar e preparar dados
+data = pd.read_csv("s3://bronze/raw_data_source1/table1/dados.csv")
+X = data.drop("target", axis=1)
+y = data["target"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-### Usando com PySpark
-
-```python
-from pyspark.ml.regression import RandomForestRegressor
-from pyspark.ml.evaluation import RegressionEvaluator
-import mlflow.spark
-
-# Treinar modelo
-rf = RandomForestRegressor(labelCol="label", featuresCol="features")
-model = rf.fit(train_data)
-
-# Avaliar modelo
-predictions = model.transform(test_data)
-rmse = RegressionEvaluator(labelCol="label").evaluate(predictions)
-
-# Registrar modelo com MLflow
+# Iniciar execução de MLflow
 with mlflow.start_run():
-    mlflow.log_param("numTrees", rf.getNumTrees())
-    mlflow.log_param("maxDepth", rf.getMaxDepth())
-    mlflow.log_metric("rmse", rmse)
-    mlflow.spark.log_model(model, "spark_model")
+    # Definir parâmetros
+    params = {
+        "n_estimators": 100,
+        "max_depth": 6,
+        "min_samples_split": 5
+    }
+    mlflow.log_params(params)
+    
+    # Treinar modelo
+    rf = RandomForestRegressor(**params)
+    rf.fit(X_train, y_train)
+    
+    # Registrar métricas
+    preds = rf.predict(X_test)
+    rmse = ((preds - y_test) ** 2).mean() ** 0.5
+    r2 = rf.score(X_test, y_test)
+    
+    mlflow.log_metrics({
+        "rmse": rmse,
+        "r2": r2
+    })
+    
+    # Salvar modelo
+    mlflow.sklearn.log_model(rf, "modelo-rf", registered_model_name="RandomForestRegressor")
+    
+    # Salvar artefato adicional
+    mlflow.log_artifact("path/to/diagram.png", "diagramas")
+    
+    print(f"Modelo salvo com RMSE: {rmse:.4f}, R²: {r2:.4f}")
 ```
 
-## Model Registry
+## Registrando Modelos
 
-O Model Registry do MLflow permite gerenciar o ciclo de vida completo de um modelo.
-
-### Registrando um Modelo
-
-```python
-# Após treinar e rastrear o modelo com uma execução
-run_id = mlflow.last_active_run().info.run_id
-model_uri = f"runs:/{run_id}/model"
-model_details = mlflow.register_model(model_uri, "previsao_precos")
-```
-
-### Transições de Estágio
+O Model Registry do MLflow permite versionar e gerenciar o ciclo de vida dos modelos:
 
 ```python
 from mlflow.tracking import MlflowClient
 
+# Criar um cliente do MLflow
 client = MlflowClient()
 
-# Promover modelo para staging
-client.transition_model_version_stage(
-    name="previsao_precos",
-    version=1,
-    stage="Staging"
-)
+# Obter o modelo mais recente
+latest_model = client.get_latest_versions("RandomForestRegressor", stages=["None"])[0]
 
-# Promover modelo para produção
+# Promover o modelo para produção
 client.transition_model_version_stage(
-    name="previsao_precos",
-    version=1,
+    name="RandomForestRegressor",
+    version=latest_model.version,
     stage="Production"
 )
-```
 
-### Carregando um Modelo do Registry
-
-```python
-# Carregar modelo específico por versão
-model = mlflow.pyfunc.load_model(model_uri="models:/previsao_precos/1")
-
-# Carregar modelo de stage específico
-model = mlflow.pyfunc.load_model(model_uri="models:/previsao_precos/Production")
-```
-
-## Integrando com Prefect
-
-O MLflow pode ser integrado com o Prefect para rastreamento de experimentos como parte de pipelines de dados:
-
-```python
-from prefect import flow, task
-import mlflow
-
-@task
-def treinar_modelo(params):
-    with mlflow.start_run() as run:
-        # Registrar parâmetros
-        mlflow.log_params(params)
-        
-        # Treinar modelo
-        model = treinar(params)
-        
-        # Registrar métricas
-        metrics = avaliar(model)
-        mlflow.log_metrics(metrics)
-        
-        # Registrar modelo
-        mlflow.sklearn.log_model(model, "model")
-        
-        return run.info.run_id, metrics
-
-@flow
-def pipeline_treinamento(params):
-    run_id, metrics = treinar_modelo(params)
-    
-    # Registrar modelo se performance for boa
-    if metrics["accuracy"] > 0.8:
-        model_uri = f"runs:/{run_id}/model"
-        mlflow.register_model(model_uri, "modelo_producao")
-        
-    return metrics
-```
-
-## MLflow Pipelines (Novo)
-
-MLflow Pipelines é um novo recurso que fornece estruturas padronizadas para fluxos de trabalho comuns de ML:
-
-```python
-from mlflow.pipelines import Pipeline
-
-# Definir pipeline de classificação
-pipeline = Pipeline(
-    pipeline_name="classificacao_clientes",
-    target_col="churn",
-    primary_metric="f1_score"
+# Documentar o modelo
+client.update_model_version(
+    name="RandomForestRegressor",
+    version=latest_model.version,
+    description="Modelo de previsão de vendas treinado em 14/05/2025"
 )
-
-# Executar etapas do pipeline
-pipeline.run("ingest")
-pipeline.run("split")
-pipeline.run("transform")
-pipeline.run("train")
-pipeline.run("evaluate")
-pipeline.run("register")
 ```
 
-## Monitoramento de Modelos
+## Servindo Modelos
 
-Para monitorar modelos em produção, o MLflow pode ser configurado com:
+Para servir um modelo registrado:
 
 ```python
 import mlflow.pyfunc
-import pandas as pd
 
-# Carregar modelo em produção
-modelo = mlflow.pyfunc.load_model("models:/modelo_producao/Production")
+# Carregar o modelo
+model_name = "RandomForestRegressor"
+model_version = 1
+model = mlflow.pyfunc.load_model(f"models:/{model_name}/{model_version}")
 
-# Monitorar entrada e saída
-def predict_with_monitoring(data):
-    # Registrar métricas de entrada
-    mlflow.log_metric("input_volume", len(data))
-    
-    # Fazer previsão
-    predictions = modelo.predict(data)
-    
-    # Registrar estatísticas da saída
-    mlflow.log_metric("prediction_mean", predictions.mean())
-    mlflow.log_metric("prediction_std", predictions.std())
-    
-    return predictions
+# Fazer predições
+predictions = model.predict(X_test)
 ```
 
-## Comparando Experimentos
+## Integração com PySpark
 
-O MLflow permite comparar visualmente diferentes experimentos:
-
-1. Acesse a UI do MLflow em [http://localhost:5000](http://localhost:5000)
-2. Selecione o experimento desejado
-3. Marque as execuções que deseja comparar
-4. Clique em "Compare" para visualizar diferenças de parâmetros e métricas
-
-## Boas Práticas
-
-1. **Nomeie experimentos adequadamente**: Use nomes descritivos para experimentos
-2. **Registre todos os parâmetros**: Para garantir reprodutibilidade
-3. **Registre métricas de validação**: Não apenas métricas de treino
-4. **Salve artefatos importantes**: Como visualizações, matrizes de confusão, etc.
-5. **Use tags**: Para organizar experimentos
-6. **Documente modelos**: Adicione descrições aos modelos registrados
-7. **Controle de versão**: Mantenha o código-fonte versionado junto com os experimentos
-8. **Automação**: Integre o MLflow em pipelines automatizados com Prefect
-
-## Integração com Delta Lake
-
-O MLflow se integra perfeitamente com Delta Lake:
+Exemplo de uso com PySpark:
 
 ```python
-# Treinar com dados do Delta Lake
-training_data = spark.read.format("delta").load("s3a://silver/training_data")
+import mlflow
+import mlflow.spark
+from pyspark.ml.regression import RandomForestRegressor
+from pyspark.ml.evaluation import RegressionEvaluator
 
-# Treinar modelo e registrar
-with mlflow.start_run():
+# Definir o URI do MLflow
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_experiment("spark-experiment")
+
+# Preparar dados
+train_df = spark.read.format("delta").load("s3://silver/clean_data_domain1/table1")
+test_df = spark.read.format("delta").load("s3://silver/clean_data_domain1/table1_test")
+
+# Treinar modelo
+rf = RandomForestRegressor(featuresCol="features", labelCol="target")
+
+with mlflow.start_run() as run:
     # Treinar modelo
-    model = train_model(training_data)
+    model = rf.fit(train_df)
     
-    # Registrar localização dos dados de treinamento
-    mlflow.log_param("training_data_path", "s3a://silver/training_data")
-    mlflow.log_param("training_data_version", delta_table.history(1).select("version").collect()[0][0])
+    # Avaliar modelo
+    predictions = model.transform(test_df)
+    evaluator = RegressionEvaluator(labelCol="target", predictionCol="prediction", metricName="rmse")
+    rmse = evaluator.evaluate(predictions)
     
-    # Registrar modelo
-    mlflow.sklearn.log_model(model, "model")
+    # Log parâmetros e métricas
+    mlflow.log_params({"numTrees": rf.getNumTrees, "maxDepth": rf.getMaxDepth})
+    mlflow.log_metric("rmse", rmse)
+    
+    # Log do modelo Spark
+    mlflow.spark.log_model(model, "spark_model", registered_model_name="SparkRandomForest")
 ```
 
-## Troubleshooting
+## Variáveis de Ambiente
 
-Problemas comuns e soluções:
+O MLflow no DataLab está configurado com as seguintes variáveis:
 
-1. **Erro de conexão**: Verifique se o servidor MLflow está em execução
-   ```bash
-   docker ps | grep mlflow
-   ```
+| Variável                | Valor                   | Descrição                              |
+|-------------------------|-------------------------|----------------------------------------|
+| MLFLOW_S3_ENDPOINT_URL  | http://minio:9000       | Endpoint MinIO para artefatos         |
+| AWS_ACCESS_KEY_ID       | ${AWS_ACCESS_KEY_ID}    | Credencial de acesso ao MinIO         |
+| AWS_SECRET_ACCESS_KEY   | ${AWS_SECRET_ACCESS_KEY}| Chave secreta de acesso ao MinIO      |
 
-2. **Erro ao salvar artefatos**: Verifique as credenciais do MinIO
-   ```bash
-   docker-compose logs mlflow
-   ```
+## Melhores Práticas
 
-3. **Modelos não aparecem no Registry**: Verifique se o registro foi bem-sucedido
-   ```python
-   client = MlflowClient()
-   client.list_registered_models()
-   ```
+1. **Organizar experimentos**: Use experimentos diferentes para diferentes casos de uso ou equipes
+2. **Registrar todos os parâmetros**: Documente todos os hiperparâmetros relevantes
+3. **Salvar artefatos complementares**: Gráficos, explicações, matrizes de confusão, etc.
+4. **Versionar dados**: Use referências para versões específicas de datasets
+5. **Anotar runs importantes**: Adicione descrições e tags para identificar experimentos bem-sucedidos
+6. **Definir estágios**: Use o registro de modelos para controlar o ciclo de vida (Staging, Production, Archived)
 
-4. **Problemas com o SQLite**: Se o banco de dados estiver corrompido, restaure de um backup
-   ```bash
-   cp /data/mlflow/mlflow.db.bak /data/mlflow/mlflow.db
-   ```
+## Limitações e Soluções
 
-## Referências
+- **Performance do SQLite**: Para produção com múltiplos usuários, considere migrar para PostgreSQL
+- **Latência do MinIO**: Para cargas maiores, configure buckets dedicados
+- **Gerenciamento de dependências**: Use MLflow Projects ou Docker para garantir reprodutibilidade
 
-- [Documentação Oficial do MLflow](https://mlflow.org/docs/latest/index.html)
-- [MLflow Tracking](https://mlflow.org/docs/latest/tracking.html)
-- [MLflow Models](https://mlflow.org/docs/latest/models.html)
-- [MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)
-- [MLflow Pipelines](https://mlflow.org/docs/latest/pipelines.html)
-- [MLflow com Delta Lake](https://docs.databricks.com/delta/delta-intro.html)
+## Recursos Adicionais
+
+- [Documentação Oficial do MLflow](https://www.mlflow.org/docs/latest/index.html)
+- [Exemplos Práticos](https://github.com/mlflow/mlflow/tree/master/examples)
+- [MLflow com Delta Lake](https://docs.databricks.com/en/machine-learning/manage-model-lifecycle/index.html)
+
+## Resolução de Problemas
+
+| Problema | Solução |
+|----------|--------|
+| O MLflow não está acessível | Verifique se o contêiner está rodando: `docker-compose ps mlflow` |
+| Erro de autenticação no MinIO | Verifique as credenciais AWS no arquivo `.env` |
+| Erros de permissão | O MLflow roda como root, verifique permissões dos volumes |
+| Modelo muito grande | Configure variável `MLFLOW_ARTIFACT_UPLOAD_DOWNLOAD_CHUNK_SIZE` |
