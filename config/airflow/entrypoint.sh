@@ -1,11 +1,20 @@
 #!/bin/bash
 set -e
 
-# Função para gerenciar permissões
+# Função para gerenciar permissões - com abordagem mais suave
 function setup_permissions() {
-  echo "Configurando permissões para o usuário airflow..."
-  mkdir -p ${AIRFLOW_HOME}/logs ${AIRFLOW_HOME}/dags ${AIRFLOW_HOME}/plugins
-  chown -R ${AIRFLOW_USER}:${AIRFLOW_USER} ${AIRFLOW_HOME}
+  echo "Verificando permissões para os diretórios do Airflow..."
+  
+  # Ajustar permissões diretamente - ignorando erros para volumes montados
+  for dir in "logs" "dags" "plugins" "config"; do
+    echo "Verificando permissões para ${AIRFLOW_HOME}/${dir}"
+    chmod -R 777 "${AIRFLOW_HOME}/${dir}" 2>/dev/null || echo "Aviso: Não foi possível alterar permissões de ${AIRFLOW_HOME}/${dir} (volume montado)"
+  done
+  
+  # Garantir que temos o arquivo .airflowignore para evitar erros de leitura
+  touch ${AIRFLOW_HOME}/dags/.airflowignore 2>/dev/null || echo "Aviso: Não foi possível criar .airflowignore"
+  
+  echo "Verificação de permissões concluída."
 }
 
 # Inicialização específica para diferentes componentes
@@ -30,6 +39,7 @@ function wait_for_postgres() {
   echo "Conexão com PostgreSQL estabelecida com sucesso!"
 }
 
+# Executar apenas verificação de permissões (sem tentar chown)
 setup_permissions
 
 # Conectado com ambientes externos se necessário
@@ -46,37 +56,34 @@ fi
 # Executa comandos como usuário airflow
 if [[ "$1" == "webserver" ]]; then
   echo "Iniciando Airflow Webserver..."
-  gosu ${AIRFLOW_USER} airflow db init
-  gosu ${AIRFLOW_USER} airflow db upgrade
-  
+  airflow db migrate && \
   # Criar usuário admin se não existir
-  if ! gosu ${AIRFLOW_USER} airflow users list | grep -q admin; then
-    gosu ${AIRFLOW_USER} airflow users create \
+  (airflow users list | grep -q admin || \
+    airflow users create \
       --username admin \
       --firstname Admin \
       --lastname Admin \
       --role Admin \
       --email admin@example.com \
-      --password admin
-  fi
-  
-  exec gosu ${AIRFLOW_USER} airflow webserver
+      --password admin) && \
+  airflow connections create-default-connections
+  exec airflow webserver
 elif [[ "$1" == "scheduler" ]]; then
   echo "Iniciando Airflow Scheduler..."
-  exec gosu ${AIRFLOW_USER} airflow scheduler
+  exec airflow scheduler
 elif [[ "$1" == "init" ]]; then
   echo "Inicializando banco de dados do Airflow..."
-  gosu ${AIRFLOW_USER} airflow db init
-  
-  gosu ${AIRFLOW_USER} airflow users create \
+  airflow db migrate && \
+  airflow users create \
     --username admin \
     --firstname Admin \
     --lastname Admin \
     --role Admin \
     --email admin@example.com \
-    --password admin
+    --password admin && \
+  airflow connections create-default-connections
   
   exit 0
 else
-  exec gosu ${AIRFLOW_USER} "$@"
+  exec "$@"
 fi

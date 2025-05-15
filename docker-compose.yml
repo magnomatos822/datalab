@@ -275,6 +275,90 @@ services:
       timeout: 10s
       retries: 3
 
+  # Banco de dados para o Airflow
+  postgres-airflow:
+    image: postgres:15
+    container_name: postgres-airflow
+    ports:
+      - "5434:5432"  # Usando porta diferente para evitar conflitos
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - ./data/airflow/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dataflow-network
+
+  # Apache Airflow
+  airflow-webserver:
+    build:
+      context: ./config/airflow
+      dockerfile: Dockerfile
+    container_name: airflow-webserver
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+    environment:
+      # Configuração para usar PostgreSQL com LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=Mq6wNzo2xYiGIg0bTa6TQO8gPKDhJj0R
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW_USER=airflow
+      - AIRFLOW_UID=50000
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+    ports:
+      - "8070:8080"
+    volumes:
+      - ./data/airflow/logs:/opt/airflow/logs
+      - ./data/airflow/dags:/opt/airflow/dags
+      - ./data/airflow/plugins:/opt/airflow/plugins
+      - ./data/airflow/config:/opt/airflow/config
+      - ./app:/opt/spark-apps:ro
+    command: bash -c "airflow db migrate && airflow webserver"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - dataflow-network
+
+  airflow-scheduler:
+    build:
+      context: ./config/airflow
+      dockerfile: Dockerfile
+    container_name: airflow-scheduler
+    depends_on:
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      # Atualizado para usar PostgreSQL com LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW_USER=airflow
+      - AIRFLOW_UID=50000
+    volumes:
+      - ./data/airflow/logs:/opt/airflow/logs
+      - ./data/airflow/dags:/opt/airflow/dags
+      - ./data/airflow/plugins:/opt/airflow/plugins
+      - ./data/airflow/config:/opt/airflow/config
+      - ./app:/opt/spark-apps:ro
+    command: bash -c "airflow scheduler"
+    networks:
+      - dataflow-network
+
 volumes:
     nifi-logs:
     nifi-conf:
