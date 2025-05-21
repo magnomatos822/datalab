@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # Apache Spark
+  spark-master:
+    image: apache/spark
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RUN_AS_USER=root
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    volumes:
+      - ./app:/opt/spark-apps
+      - ./requirements.txt:/requirements.txt
+      - ./config/minio:/opt/minio-config
+    command: >
+      bash -c "
+        pip install --no-cache-dir --upgrade pip setuptools wheel &&
+        pip install --no-cache-dir --default-timeout=100 --retries=5 -r /requirements.txt &&
+        chmod +x /opt/minio-config/minio_setup.sh &&
+        /opt/minio-config/minio_setup.sh spark-master &&
+        /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
+      "
+    networks:
+      - dataflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  spark-worker:
+    image: apache/spark
+    deploy:
+      mode: replicated
+      replicas: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_RUN_AS_USER=root
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=4G
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      - spark-master
+    ports:
+      - "8081-8083:8081"
+    volumes:
+      - ./app:/opt/spark-apps
+      - ./requirements.txt:/requirements.txt
+      - ./config/minio:/opt/minio-config
+    command: >
+      bash -c "
+        pip install --no-cache-dir --upgrade pip setuptools wheel &&
+        pip install --no-cache-dir --default-timeout=100 --retries=5 -r /requirements.txt &&
+        chmod +x /opt/minio-config/minio_setup.sh &&
+        /opt/minio-config/minio_setup.sh spark-worker &&
+        /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
+      "
+    networks:
+      - dataflow-network
+
+  nifi:
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=nifi
+      - SINGLE_USER_CREDENTIALS_PASSWORD=HGd15bvfv8744ghbdhgdv7895agqERAo
+      - TZ=America/Fortaleza
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    image: apache/nifi:2.4.0
+    container_name: apache-nifi
+    ports:
+      - "8443:8443"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.95"
+          memory: 1G
+    restart: on-failure
+    volumes: 
+      - ./nifi/jdbc:/opt/nifi/nifi-current/jdbc
+      - ./nifi/drivers:/opt/nifi/nifi-current/drivers
+      - ./config/minio:/opt/minio-config
+      - nifi-database-repository:/opt/nifi/nifi-current/database_repository
+      - nifi-flowfile-repository:/opt/nifi/nifi-current/flowfile_repository
+      - nifi-content-repository:/opt/nifi/nifi-current/content_repository
+      - nifi-provenance-repository:/opt/nifi/nifi-current/provenance_repository
+      - nifi-state:/opt/nifi/nifi-current/state
+      - nifi-conf:/opt/nifi/nifi-current/conf
+    networks:
+      - dataflow-network
+    command: >
+      bash -c "
+        mkdir -p /opt/nifi/nifi-current/drivers/postgres &&
+        mkdir -p /opt/nifi/nifi-current/drivers/mysql &&
+        mkdir -p /opt/nifi/nifi-current/drivers/mssql &&
+        mkdir -p /opt/nifi/nifi-current/drivers/oracle &&
+        cp /opt/nifi/nifi-current/jdbc/postgresql-42.6.0.jar /opt/nifi/nifi-current/drivers/postgres/ &&
+        /opt/nifi/scripts/start.sh
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-k", "--fail", "https://localhost:8443/nifi-api/system-diagnostics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  nifi-database-repository:
+  nifi-flowfile-repository:
+  nifi-content-repository:
+  nifi-provenance-repository:
+  nifi-state:
+  nifi-conf:
+
+networks:
+  dataflow-network:
+    external: true

@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  jupyter:
+    image: jupyterhub/jupyterhub:latest
+    container_name: jupyterhub
+    ports:
+      - "8888:8000"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - JUPYTER_S3_BUCKET=jupyter
+      - JUPYTERHUB_DATA_DIR=s3://jupyter
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker:/var/lib/docker
+      - ./config/minio:/opt/minio-config
+    command: >
+      bash -c "apt-get update && apt-get install -y docker.io curl &&
+      pip install notebook jupyterlab jupyterhub-idle-culler &&
+      pip install jupyterhub oauthenticator dockerspawner &&
+      jupyterhub -f /srv/jupyterhub/jupyterhub_config.py"
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Streamlit
+  streamlit:
+    build:
+      context: ./config/streamlit
+      dockerfile: Dockerfile
+    container_name: streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - PATH=/.local/bin:${PATH}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    volumes:
+      - ./app:/app
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dataflow-network:
+    external: true

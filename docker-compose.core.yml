@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Armazenamento de Dados
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - dataflow-network
+
+  # Kafka no modo KRaft (sem Zookeeper)
+  kafka:
+    image: apache/kafka:4.0.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      # Configurações básicas do KRaft (mantidas apenas como redundância)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      # Mantendo CLUSTER_ID para formatação
+      CLUSTER_ID: "5L6g3nShT-eMCtK--X86sw"
+      # Configurações para S3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_ENDPOINT: http://minio:9000
+    volumes:
+      - ./config/kafka/server.properties:/opt/kafka/config/kraft-server.properties
+      - ./config/minio:/opt/minio-config
+      - kafka-data:/var/lib/kafka/data # Volume para persistência dos logs do Kafka
+    command: [ "sh", "-c", "/opt/kafka/bin/kafka-storage.sh format -t $${CLUSTER_ID} -c /opt/kafka/config/kraft-server.properties && /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft-server.properties" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - dataflow-network
+
+  # UI moderna para o Kafka
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.1
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: DataLab Kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      SERVER_SERVLET_CONTEXT_PATH: "/"
+    networks:
+      - dataflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service Discovery com Consul
+  consul:
+    image: hashicorp/consul:1.16.0
+    container_name: consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: "agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0"
+    volumes:
+      - consul-data:/consul/data
+    networks:
+      - dataflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  minio-data:
+  kafka-data:
+  consul-data:
+
+networks:
+  dataflow-network:
+    driver: bridge

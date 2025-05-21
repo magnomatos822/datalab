@@ -10,9 +10,10 @@
   <img src="https://img.shields.io/badge/Jupyter-F37626?style=for-the-badge&logo=jupyter&logoColor=white" alt="JupyterHub">
   <img src="https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" alt="Apache Kafka">
   <img src="https://img.shields.io/static/v1?style=for-the-badge&message=Apache+NiFi&color=728E9B&logo=Apache+NiFi&logoColor=FFFFFF&label=" alt="Apache NiFi">
+  <img src="https://img.shields.io/static/v1?style=for-the-badge&message=Consul&color=F8A2BD&logo=Consul&logoColor=FFFFFF&label=" alt="Consul">
 </div>
 
-> Última atualização: 14 de maio de 2025
+> Última atualização: 21 de maio de 2025
 
 ## 🔍 Visão Geral
 
@@ -29,6 +30,9 @@ DataFlow Lab é um ambiente completo de desenvolvimento para engenharia de dados
 - **Streaming**: Apache Kafka para processamento de streaming em tempo real
 - **Visualização**: Streamlit para dashboards e aplicações de dados interativas
 - **Ambiente de Desenvolvimento**: JupyterHub para colaboração e experimentação
+- **Desacoplamento**: Arquitetura modular com Docker Compose separados por funcionalidade
+- **Service Discovery**: Consul para registro e descoberta de serviços
+- **Escalabilidade**: Load balancing para componentes críticos
 
 ## 📋 Componentes
 
@@ -43,6 +47,9 @@ DataFlow Lab é um ambiente completo de desenvolvimento para engenharia de dados
 | **JupyterHub**   | 4.0.2                        | 8000        | Ambiente de desenvolvimento            | [Documentação](/docs/jupyterhub/README.md) |
 | **Apache Kafka** | 7.5.0                        | 9092, 29092 | Streaming de eventos                   | [Documentação](/docs/kafka/README.md)      |
 | **Apache NiFi**  | 2.4.0                        | 8443        | Automação de fluxo de dados            | [Documentação](/docs/nifi/README.md)       |
+| **Consul**       | 1.16.0                       | 8500, 8600  | Service Discovery                      | [Documentação](/docs/ARCHITECTURE.md)      |
+| **Prometheus**   | latest                       | 9090        | Monitoramento de métricas              | [Documentação](/docs/ARCHITECTURE.md)      |
+| **Grafana**      | latest                       | 3000        | Visualização de métricas               | [Documentação](/docs/ARCHITECTURE.md)      |
 
 ## 🏗️ Arquitetura
 
@@ -129,6 +136,7 @@ A arquitetura Medallion possui três camadas principais:
    - Streamlit: [http://localhost:8501](http://localhost:8501)
    - Apache NiFi: [https://localhost:8443/nifi](https://localhost:8443/nifi) (nifi/HGd15bvfv8744ghbdhgdv7895agqERAo)
    - Kafka UI: [http://localhost:8090](http://localhost:8090)
+   - Consul: [http://localhost:8500](http://localhost:8500)
 
 ### Inicializando os Buckets MinIO
 
@@ -418,3 +426,43 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 - [Apache Kafka](https://kafka.apache.org/documentation/)
 - [Apache NiFi Guide](https://nifi.apache.org/docs.html)
 - [JupyterHub](https://jupyterhub.readthedocs.io/en/stable/)
+
+## 🚀 Nova Arquitetura Escalonável
+
+A partir de maio de 2025, o DataFlow Lab implementou uma arquitetura mais escalonável e desacoplada:
+
+### Desacoplamento por Funcionalidade
+
+Os serviços agora estão organizados em arquivos Docker Compose separados:
+
+- **docker-compose.core.yml**: Serviços de infraestrutura (MinIO, Kafka, Consul)
+- **docker-compose.processing.yml**: Processamento de dados (Spark, NiFi)
+- **docker-compose.ml.yml**: Machine Learning (MLflow, Prefect, Airflow)
+- **docker-compose.visualization.yml**: Visualização (JupyterHub, Streamlit)
+- **docker-compose.monitoring.yml**: Monitoramento (Prometheus, Grafana)
+
+### Gerenciamento Simplificado
+
+Use o script `scripts/manage_environments.sh` para gerenciar os ambientes:
+
+```bash
+# Iniciar apenas serviços específicos
+./scripts/manage_environments.sh start core
+
+# Iniciar múltiplos grupos de serviços
+./scripts/manage_environments.sh start core processing
+
+# Iniciar todos os serviços
+./scripts/manage_environments.sh start all
+
+# Verificar status
+./scripts/manage_environments.sh status
+```
+
+### Balanceamento de Carga e Service Discovery
+
+- Trabalhadores Spark configurados com 3 réplicas para balanceamento de carga
+- Recursos de CPU e memória garantidos para cada serviço
+- Consul configurado para service discovery entre todos os componentes
+
+Para mais detalhes sobre a arquitetura, consulte a [documentação completa](/docs/ARCHITECTURE.md).

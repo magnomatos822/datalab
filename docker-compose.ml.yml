@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # MLflow
+  mlflow:
+    build:
+      context: ./config/mlflow
+      dockerfile: Dockerfile
+    container_name: mlflow
+    user: root
+    command: ["-m", "mlflow", "server", "--host", "0.0.0.0", "--backend-store-uri", "postgresql://postgres:postgres@10.10.120.125:5000/mlflow", "--default-artifact-root", "s3://mlflow/artifacts/"]
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    volumes:
+      - ./config/minio:/opt/minio-config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Prefect
+  prefect:
+    image: prefecthq/prefect:2.14.10-python3.11
+    container_name: prefect
+    entrypoint: ["prefect", "server", "start", "--host", "0.0.0.0", "--port", "4200"]
+    ports:
+      - "4200:4200"
+    environment:
+      - PREFECT_UI_API_URL=http://localhost:4200/api
+      - PREFECT_API_URL=http://localhost:4200/api
+      - PREFECT_HOME=/opt/prefect
+      - PREFECT_SERVER_DATABASE_URL=s3://prefect/prefect.db
+      - PREFECT_SERVER_DATABASE_MIGRATE_ON_START=true
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - PREFECT_FILESYSTEMS_S3_BUCKET_PATH=s3://prefect
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    volumes:
+      - ./flows:/opt/prefect/flows
+      - ./config/minio:/opt/minio-config
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  airflow-webserver:
+    build:
+      context: ./config/airflow
+      dockerfile: Dockerfile
+    container_name: airflow-webserver
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@10.10.120.125:5000/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=Mq6wNzo2xYiGIg0bTa6TQO8gPKDhJj0R
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=True
+      - AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs
+      - AIRFLOW__CORE__DAGS_FOLDER=s3://airflow-dags/dags/
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW_USER=airflow
+      - AIRFLOW_UID=50000
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    ports:
+      - "8070:8080"
+    volumes:
+      - ./config/minio:/opt/minio-config
+    command: bash -c "airflow db migrate && airflow webserver"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  airflow-scheduler:
+    build:
+      context: ./config/airflow
+      dockerfile: Dockerfile
+    container_name: airflow-scheduler
+    depends_on:
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@10.10.120.125:5000/airflow
+      - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=True
+      - AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs
+      - AIRFLOW__CORE__DAGS_FOLDER=s3://airflow-dags/dags/
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW_USER=airflow
+      - AIRFLOW_UID=50000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
+    volumes:
+      - ./config/minio:/opt/minio-config
+    command: bash -c "airflow scheduler"
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+networks:
+  dataflow-network:
+    external: true
