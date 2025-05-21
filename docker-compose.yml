@@ -10,7 +10,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
-      - ./data/minio:/data
+      - minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -22,48 +22,59 @@ services:
 
   # Apache Spark
   spark-master:
-    image: bitnami/spark:3.5.5
+    image: apache/spark
     container_name: spark-master
     environment:
       - SPARK_MODE=master
       - SPARK_RUN_AS_USER=root  # Executar como root para evitar problemas de permissão
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
     ports:
       - "7077:7077"
       - "8080:8080"
     volumes:
-      - ./data/spark/master:/opt/bitnami/spark/data  # Mapeamento para diretório local
       - ./app:/opt/spark-apps
       - ./requirements.txt:/requirements.txt
+      - ./config/minio:/opt/minio-config
     command: >
       bash -c "
         pip install --no-cache-dir --upgrade pip setuptools wheel &&
         pip install --no-cache-dir --default-timeout=100 --retries=5 -r /requirements.txt &&
+        chmod +x /opt/minio-config/minio_setup.sh &&
+        /opt/minio-config/minio_setup.sh spark-master &&
         /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
       "
     networks:
       - dataflow-network
 
   spark-worker:
-    image: bitnami/spark:3.5.5
+    image: apache/spark
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_RUN_AS_USER=root  # Executar como root para evitar problemas de permissão
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
     depends_on:
       - spark-master
+      - minio
     ports:
       - "8081:8081"
     volumes:
-      - ./data/spark/worker:/opt/bitnami/spark/data  # Mapeamento para diretório local
       - ./app:/opt/spark-apps
       - ./requirements.txt:/requirements.txt
+      - ./config/minio:/opt/minio-config
     command: >
       bash -c "
         pip install --no-cache-dir --upgrade pip setuptools wheel &&
         pip install --no-cache-dir --default-timeout=100 --retries=5 -r /requirements.txt &&
+        chmod +x /opt/minio-config/minio_setup.sh &&
+        /opt/minio-config/minio_setup.sh spark-worker &&
         /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
       "
     networks:
@@ -71,10 +82,12 @@ services:
 
   # MLflow
   mlflow:
-    image: bitnami/mlflow:2.22.0
+    build:
+      context: ./config/mlflow
+      dockerfile: Dockerfile
     container_name: mlflow
     user: root  # Executar como root para evitar problemas de permissão
-    command: ["-m", "mlflow", "server", "--host", "0.0.0.0", "--backend-store-uri", "sqlite:////bitnami/mlflow/mlflow.db", "--default-artifact-root", "s3://mlflow/"]
+    command: ["-m", "mlflow", "server", "--host", "0.0.0.0", "--backend-store-uri", "postgresql://postgres:postgres@10.10.120.125:5000/mlflow", "--default-artifact-root", "s3://mlflow/artifacts/"]
     ports:
       - "5000:5000"
     environment:
@@ -82,9 +95,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     volumes:
-      - ./mlruns:/app/mlruns  # Mapeamento para diretório local de mlruns
-      - ./models:/app/models  # Mapeamento para modelos
-      - ./data/mlflow/db:/bitnami/mlflow  # Armazenamento do banco de dados
+      - ./config/minio:/opt/minio-config
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000"]
       interval: 30s
@@ -104,12 +115,17 @@ services:
       - PREFECT_UI_API_URL=http://localhost:4200/api
       - PREFECT_API_URL=http://localhost:4200/api
       - PREFECT_HOME=/opt/prefect
-      - PREFECT_SERVER_DATABASE_URL=sqlite:////opt/prefect/prefect.db
+      - PREFECT_SERVER_DATABASE_URL=s3://prefect/prefect.db
       - PREFECT_SERVER_DATABASE_MIGRATE_ON_START=true  # Garantir que as migrações sejam aplicadas corretamente
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - PREFECT_FILESYSTEMS_S3_BUCKET_PATH=s3://prefect
     volumes:
-      - ./data/prefect:/opt/prefect  # Mapeamento para diretório local
-      - ./flows:/opt/prefect/flows  # Já mapeado diretamente para o diretório local
-      - ./data:/opt/prefect/data    # Já mapeado diretamente para o diretório local
+      - ./flows:/opt/prefect/flows  # Mantendo mapeamento para flows
+      - ./config/minio:/opt/minio-config
+    depends_on:
+      - minio
     networks:
       - dataflow-network
 
@@ -118,12 +134,18 @@ services:
     container_name: jupyterhub
     ports:
       - "8888:8000"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
+      - JUPYTER_S3_BUCKET=jupyter
+      - JUPYTERHUB_DATA_DIR=s3://jupyter
     volumes:
       - ./notebooks:/home/jovyan/work
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
-      - ./data/jupyter:/data
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker:/var/lib/docker
+      - ./config/minio:/opt/minio-config
     command: >
       bash -c "apt-get update && apt-get install -y docker.io curl &&
       pip install notebook jupyterlab jupyterhub-idle-culler &&
@@ -170,6 +192,9 @@ services:
       - SINGLE_USER_CREDENTIALS_USERNAME=nifi
       - SINGLE_USER_CREDENTIALS_PASSWORD=HGd15bvfv8744ghbdhgdv7895agqERAo
       - TZ=America/Fortaleza
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
     image: apache/nifi:2.4.0
     container_name: apache-nifi
     ports:
@@ -183,13 +208,7 @@ services:
     volumes: 
       - ./nifi/jdbc:/opt/nifi/nifi-current/jdbc  # Mantendo o volume original para compatibilidade
       - ./nifi/drivers:/opt/nifi/nifi-current/drivers  # Novo volume para organizar drivers por tipo
-      - nifi-logs:/opt/nifi/nifi-current/logs
-      - nifi-conf:/opt/nifi/nifi-current/conf
-      - nifi-state:/opt/nifi/nifi-current/state
-      - nifi-content:/opt/nifi/nifi-current/content_repository
-      - nifi-database:/opt/nifi/nifi-current/database_repository
-      - nifi-flowfile:/opt/nifi/nifi-current/flowfile_repository
-      - nifi-provenance:/opt/nifi/nifi-current/provenance_repository
+      - ./config/minio:/opt/minio-config
     networks:
       - dataflow-network
     # Comando inicial para baixar drivers comuns, se necessário
@@ -217,9 +236,13 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
       # Mantendo CLUSTER_ID para formatação
       CLUSTER_ID: "5L6g3nShT-eMCtK--X86sw"
+      # Configurações para S3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_ENDPOINT: http://minio:9000
     volumes:
-      - kafka-data:/var/lib/kafka/data
       - ./config/kafka/server.properties:/opt/kafka/config/kraft-server.properties
+      - ./config/minio:/opt/minio-config
     command: [ "sh", "-c", "/opt/kafka/bin/kafka-storage.sh format -t $${CLUSTER_ID} -c /opt/kafka/config/kraft-server.properties && /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft-server.properties" ]
     healthcheck:
       test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list" ]
@@ -254,53 +277,31 @@ services:
       timeout: 10s
       retries: 3
 
-  # Banco de dados para o Airflow
-  postgres-airflow:
-    image: postgres:15
-    container_name: postgres-airflow
-    ports:
-      - "5434:5432"  # Usando porta diferente para evitar conflitos
-    environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
-    volumes:
-      - ./data/airflow/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "airflow"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - dataflow-network
-
-  # Apache Airflow
   airflow-webserver:
     build:
       context: ./config/airflow
       dockerfile: Dockerfile
     container_name: airflow-webserver
-    depends_on:
-      postgres-airflow:
-        condition: service_healthy
     environment:
       # Configuração para usar PostgreSQL com LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@10.10.120.125:5000/airflow
       - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
       - AIRFLOW__WEBSERVER__SECRET_KEY=Mq6wNzo2xYiGIg0bTa6TQO8gPKDhJj0R
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=True
+      - AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs
       - AIRFLOW_HOME=/opt/airflow
       - AIRFLOW_USER=airflow
       - AIRFLOW_UID=50000
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
     ports:
       - "8070:8080"
     volumes:
-      - ./data/airflow/logs:/opt/airflow/logs
-      - ./data/airflow/dags:/opt/airflow/dags
-      - ./data/airflow/plugins:/opt/airflow/plugins
-      - ./data/airflow/config:/opt/airflow/config
+      - ./config/minio:/opt/minio-config
       - ./app:/opt/spark-apps:ro
     command: bash -c "airflow db migrate && airflow webserver"
     healthcheck:
@@ -321,33 +322,28 @@ services:
         condition: service_healthy
     environment:
       # Atualizado para usar PostgreSQL com LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@10.10.120.125:5000/airflow
       - AIRFLOW__CORE__FERNET_KEY=YGeLO_5NQJ3x0bJoi4LzeFCIFZnRyFkD3TV1-IZzTmY=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=True
+      - AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs
       - AIRFLOW_HOME=/opt/airflow
       - AIRFLOW_USER=airflow
       - AIRFLOW_UID=50000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=http://minio:9000
     volumes:
-      - ./data/airflow/logs:/opt/airflow/logs
-      - ./data/airflow/dags:/opt/airflow/dags
-      - ./data/airflow/plugins:/opt/airflow/plugins
-      - ./data/airflow/config:/opt/airflow/config
+      - ./config/minio:/opt/minio-config
       - ./app:/opt/spark-apps:ro
     command: bash -c "airflow scheduler"
     networks:
       - dataflow-network
 
 volumes:
-    nifi-logs:
-    nifi-conf:
-    nifi-state:
-    nifi-content:
-    nifi-database:
-    nifi-flowfile:
-    nifi-provenance:
-    kafka-data:
-    zookeeper-logs:
+    # Apenas o volume do MinIO é necessário, pois todos os outros dados serão armazenados em buckets do MinIO
+    minio-data:
 networks:
   dataflow-network:
     driver: bridge
