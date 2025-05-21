@@ -2,19 +2,34 @@
 Implementação de exemplo da arquitetura Medallion com Delta Lake
 """
 
+import logging
 import os
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp, lit
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Configurações
-BRONZE_BUCKET = "s3a://bronze"
-SILVER_BUCKET = "s3a://silver"
-GOLD_BUCKET = "s3a://gold"
+BRONZE_BUCKET = os.environ.get("MINIO_BUCKET_BRONZE", "s3a://bronze")
+SILVER_BUCKET = os.environ.get("MINIO_BUCKET_SILVER", "s3a://silver")
+GOLD_BUCKET = os.environ.get("MINIO_BUCKET_GOLD", "s3a://gold")
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=60))
 def create_spark_session():
-    """Cria uma sessão Spark com suporte a Delta Lake"""
+    """Cria uma sessão Spark com suporte a Delta Lake com retry para resiliência"""
+    logger.info("Inicializando sessão Spark com suporte a Delta Lake")
+
+    # Obter credenciais do ambiente (mais seguro)
+    access_key = os.environ.get("AWS_ACCESS_KEY_ID", "admin")
+    secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY", "admin123")
+    endpoint = os.environ.get("MINIO_ENDPOINT", "http://minio:9000")
 
     return (
         SparkSession.builder.appName("MedallionArchitecture")
@@ -23,11 +38,17 @@ def create_spark_session():
             "spark.sql.catalog.spark_catalog",
             "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         )
-        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
-        .config("spark.hadoop.fs.s3a.access.key", "admin")
-        .config("spark.hadoop.fs.s3a.secret.key", "admin123")
+        .config("spark.hadoop.fs.s3a.endpoint", endpoint)
+        .config("spark.hadoop.fs.s3a.access.key", access_key)
+        .config("spark.hadoop.fs.s3a.secret.key", secret_key)
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        # Configurações para melhorar resiliência
+        .config("spark.hadoop.fs.s3a.connection.maximum", 100)
+        .config("spark.hadoop.fs.s3a.connection.timeout", 300000)
+        .config("spark.hadoop.fs.s3a.attempts.maximum", 20)
+        .config("spark.hadoop.fs.s3a.retry.interval", "1s")
+        .config("spark.hadoop.fs.s3a.retry.limit", 20)
         .getOrCreate()
     )
 

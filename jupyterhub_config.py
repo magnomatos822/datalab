@@ -10,11 +10,10 @@ c.JupyterHub.port = (
 )
 c.JupyterHub.admin_access = True
 
-# Autenticador simples para desenvolvimento
-c.JupyterHub.authenticator_class = "jupyterhub.auth.DummyAuthenticator"
-c.DummyAuthenticator.password = "datalab"
+# Autenticador mais seguro
+c.JupyterHub.authenticator_class = "jupyterhub.auth.PAMAuthenticator"
 
-# Definir nomes de usuários permitidos
+# Definir nomes de usuários permitidos - boa prática de segurança
 c.Authenticator.allowed_users = {"magnomatos822", "admin"}
 c.Authenticator.admin_users = {"admin"}
 

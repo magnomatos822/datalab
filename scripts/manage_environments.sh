@@ -67,10 +67,45 @@ check_network() {
     fi
 }
 
+# Função para preparar volumes com permissões adequadas
+prepare_volumes() {
+    echo -e "${BLUE}Verificando e preparando volumes...${NC}"
+    
+    # Garantir que os diretórios de dados existem e têm permissões corretas
+    mkdir -p data/minio
+    mkdir -p data/consul
+    chmod -R 777 data/minio
+    chmod -R 777 data/consul
+    
+    # Remover volumes antigos que podem ter permissões incorretas
+    if docker volume ls | grep -q minio-data; then
+        echo -e "${YELLOW}Removendo volume antigo do MinIO...${NC}"
+        docker volume rm minio-data || true
+    fi
+    
+    if docker volume ls | grep -q consul-data; then
+        echo -e "${YELLOW}Removendo volume antigo do Consul...${NC}"
+        docker volume rm consul-data || true
+    fi
+    
+    # Criar novos volumes com permissões adequadas
+    echo -e "${BLUE}Criando volumes com permissões corretas...${NC}"
+    docker volume create --name minio-data
+    docker volume create --name consul-data
+    
+    # Inicializar volumes com permissões corretas usando contêineres temporários
+    echo -e "${BLUE}Inicializando volume MinIO com permissões corretas...${NC}"
+    docker run --rm -v minio-data:/data busybox sh -c "chown -R 1001:1001 /data && chmod -R 777 /data"
+    
+    echo -e "${BLUE}Inicializando volume Consul com permissões corretas...${NC}"
+    docker run --rm -v consul-data:/data busybox sh -c "chown -R 1001:1001 /data && chmod -R 777 /data"
+}
+
 # Função para iniciar um ambiente específico
 start_environment() {
     local env=$1
     check_network
+    prepare_volumes
     
     case $env in
         core)
