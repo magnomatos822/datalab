@@ -5,18 +5,18 @@ USER root
 # Instalando dependências necessárias
 RUN pip install boto3 pymysql
 
-# Na imagem bitnami/mlflow, o Python pode estar em /opt/bitnami/python/bin/python
-# Adicionando todos os possíveis caminhos ao PATH
-ENV PATH="/opt/bitnami/python/bin:/opt/bitnami/mlflow/bin:/usr/local/bin:/.local/bin:${PATH}"
-ENV PYTHONPATH="/app:${PYTHONPATH}"
+# Criando diretório de trabalho do MLflow com permissões corretas
+RUN mkdir -p /opt/mlflow && \
+    chown -R 1001:1001 /opt/mlflow && \
+    chmod 755 /opt/mlflow
 
-# Criando um link simbólico para garantir que 'python' esteja disponível
-RUN ln -sf $(which python3) /usr/local/bin/python || echo "Não foi possível criar o link simbólico"
+# Verificando e configurando Python
+RUN python3 --version
+RUN which python3
+RUN which mlflow
 
-# Verificando os caminhos
-RUN echo "Verificando PATH: $PATH"
-RUN find / -name python3 -type f 2>/dev/null || echo "Python3 não encontrado"
-RUN find / -name python -type f 2>/dev/null || echo "Python não encontrado"
-RUN find / -name mlflow -type f 2>/dev/null || echo "MLflow não encontrado"
+# Garantindo que o usuário 1001 possa escrever no diretório
+RUN touch /opt/mlflow/mlflow.db && \
+    chown 1001:1001 /opt/mlflow/mlflow.db
 
 USER 1001
