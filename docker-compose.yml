@@ -243,7 +243,9 @@ services:
   
   # JupyterHub (Notebooks)
   jupyter:
-    image: jupyterhub/jupyterhub:latest
+    build:
+      context: ./config/jupyterhub
+      dockerfile: Dockerfile
     container_name: jupyterhub
     ports:
       - "8888:8000"
@@ -256,11 +258,6 @@ services:
       - ./notebooks:/home/jovyan/work
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
       - /var/run/docker.sock:/var/run/docker.sock
-    command: >
-      bash -c "apt-get update && apt-get install -y docker.io curl &&
-      pip install notebook jupyterlab jupyterhub-idle-culler &&
-      pip install jupyterhub oauthenticator dockerspawner &&
-      jupyterhub -f /srv/jupyterhub/jupyterhub_config.py"
     networks:
       - dataflow-network
     deploy:

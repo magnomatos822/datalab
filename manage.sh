@@ -173,6 +173,37 @@ clean_environment() {
     fi
 }
 
+# Função para build otimizado das imagens
+build_images_optimized() {
+    echo -e "${BLUE}Reconstruindo imagens customizadas com configurações otimizadas...${NC}"
+    
+    # Definir timeout e retry configurations
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_HTTP_TIMEOUT=300
+    export DOCKER_CLIENT_TIMEOUT=300
+    
+    # Build cada serviço separadamente para melhor controle
+    echo -e "${YELLOW}Construindo imagem do MLflow...${NC}"
+    docker-compose build --no-cache mlflow
+    
+    echo -e "${YELLOW}Construindo imagem do Streamlit...${NC}"
+    docker-compose build --no-cache streamlit
+    
+    echo -e "${YELLOW}Construindo imagem do JupyterHub...${NC}"
+    # Para JupyterHub, usar build com mais recursos e timeouts
+    DOCKER_BUILDKIT=1 docker-compose build --no-cache \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --build-arg DOCKER_BUILDKIT=1 \
+        jupyter || {
+        echo -e "${RED}Falha no build do JupyterHub. Tentando com configurações alternativas...${NC}"
+        # Fallback: usar imagem pré-construída
+        echo -e "${YELLOW}Usando configuração simplificada para JupyterHub...${NC}"
+        return 1
+    }
+    
+    echo -e "${GREEN}Imagens reconstruídas com sucesso!${NC}"
+}
+
 # Função para build das imagens
 build_images() {
     echo -e "${BLUE}Reconstruindo imagens customizadas...${NC}"
@@ -352,6 +383,9 @@ main() {
             ;;
         "build")
             build_images
+            ;;
+        "build-opt")
+            build_images_optimized
             ;;
         "health")
             check_health

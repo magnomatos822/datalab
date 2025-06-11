@@ -10,12 +10,16 @@ c.JupyterHub.port = (
 )
 c.JupyterHub.admin_access = True
 
-# Autenticador mais seguro
-c.JupyterHub.authenticator_class = "jupyterhub.auth.PAMAuthenticator"
+# Autenticador para desenvolvimento - permite qualquer senha
+# Para produção, usar PAMAuthenticator com usuários criados
+c.JupyterHub.authenticator_class = "jupyterhub.auth.DummyAuthenticator"
 
 # Definir nomes de usuários permitidos - boa prática de segurança
 c.Authenticator.allowed_users = {"magnomatos822", "admin"}
 c.Authenticator.admin_users = {"admin"}
+
+# Para usar autenticação mais segura (descomente as linhas abaixo e comente a linha DummyAuthenticator)
+# c.JupyterHub.authenticator_class = "jupyterhub.auth.PAMAuthenticator"
 
 # Configurar o inicializador do notebook
 c.JupyterHub.spawner_class = "jupyterhub.spawner.SimpleLocalProcessSpawner"
