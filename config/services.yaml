@@ -1,0 +1,87 @@
+jupyterhub: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    JUPYTERHUB_CRYPT_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  health_check: http://localhost:8000/hub/health
+  image: jupyterhub/jupyterhub:latest
+  name: jupyterhub
+  ports:
+    ui: 8000
+  resources: {}
+  version: latest
+  volumes: []
+minio: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    MINIO_ROOT_PASSWORD: minio123
+    MINIO_ROOT_USER: minio
+  health_check: http://localhost:9000/minio/health/live
+  image: minio/minio:latest
+  name: minio
+  ports:
+    api: 9000
+    console: 9001
+  resources: {}
+  version: latest
+  volumes: []
+mlflow: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    MLFLOW_BACKEND_STORE_URI: sqlite:///mlflow.db
+    MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://mlflow/artifacts
+  health_check: http://localhost:5000/health
+  image: python:3.11
+  name: mlflow
+  ports:
+    ui: 5000
+  resources: {}
+  version: latest
+  volumes: []
+prefect: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    PREFECT_API_URL: http://localhost:4200/api
+    PREFECT_SERVER_API_HOST: 0.0.0.0
+    PREFECT_UI_URL: http://localhost:4200
+  health_check: http://localhost:4200/api/health
+  image: prefecthq/prefect:2.14.11-python3.11
+  name: prefect-server
+  ports:
+    api: 4200
+  resources: {}
+  version: latest
+  volumes: []
+spark: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    SPARK_MODE: master
+    SPARK_RPC_AUTHENTICATION_ENABLED: 'no'
+    SPARK_RPC_ENCRYPTION_ENABLED: 'no'
+  health_check: http://localhost:8080
+  image: bitnami/spark:3.5
+  name: spark-master
+  ports:
+    master: 7077
+    ui: 8080
+  resources: {}
+  version: latest
+  volumes: []
+streamlit: !!python/object:config.platform_config.ServiceConfiguration
+  dependencies: []
+  enabled: true
+  environment:
+    STREAMLIT_SERVER_ADDRESS: 0.0.0.0
+    STREAMLIT_SERVER_PORT: '8501'
+  health_check: http://localhost:8501/healthz
+  image: python:3.11
+  name: streamlit
+  ports:
+    ui: 8501
+  resources: {}
+  version: latest
+  volumes: []

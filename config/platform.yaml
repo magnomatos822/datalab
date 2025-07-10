@@ -1,0 +1,36 @@
+compute:
+  spark:
+    app_name: DataLab
+    driver_memory: 1g
+    executor_memory: 2g
+    master: spark://localhost:7077
+monitoring:
+  alerts:
+    channels:
+    - log
+    - kafka
+    enabled: true
+  metrics:
+    enabled: true
+    interval: 30
+platform:
+  debug: true
+  environment: development
+  log_level: INFO
+  name: DataLab
+  version: 1.0.0
+security:
+  authentication: false
+  authorization: false
+  encryption: false
+storage:
+  data_lake:
+    access_key: minio
+    buckets:
+      bronze: bronze
+      gold: gold
+      mlflow: mlflow
+      silver: silver
+    endpoint: http://localhost:9000
+    provider: minio
+    secret_key: minio123

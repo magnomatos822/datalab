@@ -1,0 +1,74 @@
+[
+  {
+    "date": "2024-01-01",
+    "symbol": "AAPL",
+    "open": "150.0",
+    "high": "155.0",
+    "low": "149.0",
+    "close": "154.0",
+    "volume": "1000000",
+    "ingested_at": "2025-07-09T20:15:23.917500",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  },
+  {
+    "date": "2024-01-02",
+    "symbol": "AAPL",
+    "open": "154.0",
+    "high": "158.0",
+    "low": "153.0",
+    "close": "157.0",
+    "volume": "1100000",
+    "ingested_at": "2025-07-09T20:15:23.917520",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  },
+  {
+    "date": "2024-01-03",
+    "symbol": "AAPL",
+    "open": "157.0",
+    "high": "160.0",
+    "low": "156.0",
+    "close": "159.0",
+    "volume": "1200000",
+    "ingested_at": "2025-07-09T20:15:23.917526",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  },
+  {
+    "date": "2024-01-01",
+    "symbol": "GOOGL",
+    "open": "2800.0",
+    "high": "2850.0",
+    "low": "2790.0",
+    "close": "2840.0",
+    "volume": "500000",
+    "ingested_at": "2025-07-09T20:15:23.917530",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  },
+  {
+    "date": "2024-01-02",
+    "symbol": "GOOGL",
+    "open": "2840.0",
+    "high": "2880.0",
+    "low": "2830.0",
+    "close": "2870.0",
+    "volume": "550000",
+    "ingested_at": "2025-07-09T20:15:23.917534",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  },
+  {
+    "date": "2024-01-03",
+    "symbol": "GOOGL",
+    "open": "2870.0",
+    "high": "2900.0",
+    "low": "2860.0",
+    "close": "2890.0",
+    "volume": "600000",
+    "ingested_at": "2025-07-09T20:15:23.917539",
+    "source_file": "/home/magnomatos/Documentos/projetos-pessoais/datalab/data/test/sample_stocks.csv",
+    "processing_stage": "bronze"
+  }
+]

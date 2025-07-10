@@ -17,6 +17,8 @@ services:
       - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY:-minioadmin}
       - MINIO_DAEMON_USER=root
       - MINIO_DAEMON_GROUP=root
+      - MINIO_CONSOLE_ADDRESS=:9001
+      - MINIO_BROWSER=on
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -205,20 +207,29 @@ services:
     depends_on:
       - minio
 
-  # Prefect (Workflow Orchestration)
+  # Prefect Server (Workflow Orchestration)
   prefect:
-    image: prefecthq/prefect:2.14.10-python3.11
-    container_name: prefect
-    command: ["prefect", "server", "start", "--host", "0.0.0.0"]
+    image: prefecthq/prefect:3.4.1-python3.11
+    container_name: prefect-server
+    command: ["prefect", "server", "start", "--host", "0.0.0.0", "--port", "4200"]
     ports:
       - "4200:4200"
     environment:
       - PREFECT_SERVER_API_HOST=0.0.0.0
       - PREFECT_API_URL=http://localhost:4200/api
+      - PREFECT_UI_API_URL=http://localhost:4200/api
+      - PREFECT_SERVER_DATABASE_URL=sqlite+aiosqlite:////opt/prefect/prefect.db
+      - PREFECT_SERVER_DATABASE_MIGRATE_ON_START=true
+      - PREFECT_HOME=/opt/prefect
+      - PREFECT_LOCAL_STORAGE_PATH=/opt/prefect/storage
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - SERVICE_DISCOVERY_CONSUL=consul:8500
     volumes:
       - prefect-data:/opt/prefect
+      - ./flows:/opt/prefect/flows
+      - ./app:/opt/spark-apps
+      - ./data/prefect:/opt/prefect/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
       interval: 30s
@@ -229,13 +240,53 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 2G
+          cpus: '2'
+          memory: 4G
         reservations:
           cpus: '0.5'
           memory: 1G
     depends_on:
       - minio
+      - kafka
+
+  # Prefect Worker (Background Task Execution)
+  prefect-worker:
+    image: prefecthq/prefect:3.4.1-python3.11
+    container_name: prefect-worker
+    command: >
+      bash -c "
+        pip install pyspark==3.5.5 delta-spark==3.3.1 kafka-python==2.0.2 &&
+        prefect worker start --pool default-agent-pool --type process
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+      - PREFECT_HOME=/opt/prefect
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - MINIO_ENDPOINT=http://minio:9000
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - prefect-data:/opt/prefect
+      - ./flows:/opt/prefect/flows
+      - ./app:/opt/spark-apps
+      - ./data:/opt/spark-data
+    networks:
+      - dataflow-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    depends_on:
+      - prefect
+      - spark-master
+      - minio
+      - kafka
 
   # ====================================
   # VISUALIZATION & ANALYSIS

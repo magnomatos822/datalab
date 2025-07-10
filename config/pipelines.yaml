@@ -1,0 +1,66 @@
+maintenance: !!python/object:config.platform_config.PipelineConfiguration
+  description: Pipeline de manutenção e limpeza
+  enabled: true
+  name: maintenance
+  notifications: {}
+  parameters:
+    retention_days: 30
+  retry_policy:
+    delay: 60
+    max_retries: 3
+  schedule: 0 1 * * 0
+  tasks:
+  - cleanup_logs
+  - optimize_storage
+  - backup_metadata
+medallion_etl: !!python/object:config.platform_config.PipelineConfiguration
+  description: Pipeline ETL com arquitetura Medallion
+  enabled: true
+  name: medallion_etl
+  notifications:
+    on_failure:
+    - email
+    - slack
+  parameters:
+    enable_quality_checks: true
+    min_rows_threshold: 1000
+    source_path: /data/raw/stocks.csv
+  retry_policy:
+    delay: 60
+    max_retries: 3
+  schedule: 0 6 * * *
+  tasks:
+  - bronze_ingestion
+  - silver_processing
+  - gold_aggregation
+mlops: !!python/object:config.platform_config.PipelineConfiguration
+  description: Pipeline MLOps para treinamento e deploy
+  enabled: true
+  name: mlops
+  notifications: {}
+  parameters:
+    model_type: regression
+    validation_threshold: 0.8
+  retry_policy:
+    delay: 120
+    max_retries: 1
+  schedule: 0 2 * * 1
+  tasks:
+  - model_training
+  - model_validation
+  - model_deployment
+monitoring: !!python/object:config.platform_config.PipelineConfiguration
+  description: Pipeline de monitoramento da plataforma
+  enabled: true
+  name: monitoring
+  notifications: {}
+  parameters:
+    check_interval: 300
+  retry_policy:
+    delay: 30
+    max_retries: 2
+  schedule: '*/5 * * * *'
+  tasks:
+  - health_check
+  - metrics_collection
+  - alert_processing

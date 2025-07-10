@@ -31,6 +31,8 @@ show_help() {
     echo "  health             - Verifica a saúde dos serviços"
     echo "  urls               - Mostra as URLs de acesso dos serviços"
     echo "  credentials        - Mostra todas as credenciais de acesso"
+    echo "  prefect-init       - Inicializa fluxos Prefect"
+    echo "  prefect-status     - Status dos fluxos Prefect"
     echo
     echo "PERFIS DISPONÍVEIS:"
     echo "  core              - Serviços essenciais (MinIO, Kafka)"
@@ -357,6 +359,71 @@ show_credentials() {
     echo
 }
 
+# Função para inicializar fluxos Prefect
+init_prefect_flows() {
+    echo -e "${BLUE}Inicializando fluxos Prefect...${NC}"
+    
+    # Verificar se o Prefect está rodando
+    if ! docker-compose ps prefect-server | grep -q "Up"; then
+        echo -e "${RED}Erro: Prefect server não está rodando. Execute 'start' primeiro.${NC}"
+        return 1
+    fi
+    
+    echo -e "${YELLOW}Aguardando Prefect server estar pronto...${NC}"
+    
+    # Executar script de inicialização
+    if [ -f "./scripts/init_prefect_flows.sh" ]; then
+        chmod +x ./scripts/init_prefect_flows.sh
+        ./scripts/init_prefect_flows.sh
+    else
+        echo -e "${RED}Erro: Script de inicialização não encontrado em ./scripts/init_prefect_flows.sh${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Fluxos Prefect inicializados com sucesso!${NC}"
+    echo -e "${BLUE}Acesse o dashboard em: http://localhost:4200${NC}"
+}
+
+# Função para verificar status dos fluxos Prefect
+check_prefect_status() {
+    echo -e "${BLUE}Verificando status dos fluxos Prefect...${NC}"
+    
+    # Verificar se o Prefect está rodando
+    if ! docker-compose ps prefect-server | grep -q "Up"; then
+        echo -e "${RED}❌ Prefect server não está rodando${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Prefect server está rodando${NC}"
+    
+    # Verificar worker
+    if docker-compose ps prefect-worker | grep -q "Up"; then
+        echo -e "${GREEN}✅ Prefect worker está ativo${NC}"
+    else
+        echo -e "${RED}❌ Prefect worker não está rodando${NC}"
+    fi
+    
+    # Verificar conectividade com API
+    if curl -s -f http://localhost:4200/api/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ API Prefect acessível${NC}"
+        
+        # Executar script de status se disponível
+        if [ -f "./flows/manage_deployments.py" ]; then
+            echo -e "${BLUE}📋 Status dos deployments:${NC}"
+            cd flows && python manage_deployments.py list 2>/dev/null || echo -e "${YELLOW}⚠️ Erro ao listar deployments${NC}"
+            cd ..
+        fi
+    else
+        echo -e "${RED}❌ API Prefect não acessível${NC}"
+    fi
+    
+    echo
+    echo -e "${BLUE}🌐 URLs importantes:${NC}"
+    echo -e "   Prefect UI: http://localhost:4200"
+    echo -e "   API: http://localhost:4200/api"
+    echo -e "   Dashboard DataLab: http://localhost:8501 (seção Prefect Flows)"
+}
+
 # Função principal
 main() {
     check_docker
@@ -396,14 +463,14 @@ main() {
         "credentials")
             show_credentials
             ;;
-        "help"|"-h"|"--help")
-            show_help
+        "prefect-init")
+            init_prefect_flows
             ;;
-        *)
-            echo -e "${RED}Comando inválido: $1${NC}"
-            echo
+        "prefect-status")
+            check_prefect_status
+            ;;
+        "help"|*)
             show_help
-            exit 1
             ;;
     esac
 }

@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-07-09 20:52:58",
+  "results": {
+    "dependencies": {
+      "status": "PASS",
+      "details": ""
+    },
+    "configuration": {
+      "status": "FAIL",
+      "details": ""
+    },
+    "docker_services": {
+      "status": "PASS",
+      "details": ""
+    },
+    "service_health": {
+      "status": "PASS",
+      "details": ""
+    },
+    "cli_interface": {
+      "status": "PASS",
+      "details": ""
+    },
+    "platform_api": {
+      "status": "PASS",
+      "details": ""
+    },
+    "data_pipeline": {
+      "status": "PASS",
+      "details": ""
+    }
+  },
+  "summary": {
+    "total": 7,
+    "passed": 6,
+    "failed": 1,
+    "errors": 0,
+    "success_rate": 85.71428571428571
+  }
+}

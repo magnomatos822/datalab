@@ -1,0 +1,38 @@
+{
+  "symbol_metrics": {
+    "GOOGL": {
+      "symbol": "GOOGL",
+      "total_records": 3,
+      "avg_price": 2866.6666666666665,
+      "max_price": 2890.0,
+      "min_price": 2840.0,
+      "total_volume": 1650000,
+      "avg_volume": 550000.0,
+      "avg_daily_return": 1.0605911894129,
+      "price_volatility": 50.0,
+      "generated_at": "2025-07-09T20:15:23.921230",
+      "processing_stage": "gold"
+    },
+    "AAPL": {
+      "symbol": "AAPL",
+      "total_records": 3,
+      "avg_price": 156.66666666666666,
+      "max_price": 159.0,
+      "min_price": 154.0,
+      "total_volume": 3300000,
+      "avg_volume": 1100000.0,
+      "avg_daily_return": 1.9628679883456954,
+      "price_volatility": 5.0,
+      "generated_at": "2025-07-09T20:15:23.921246",
+      "processing_stage": "gold"
+    }
+  },
+  "global_metrics": {
+    "total_records": 6,
+    "total_symbols": 2,
+    "overall_avg_price": 1511.6666666666667,
+    "overall_total_volume": 4950000,
+    "processing_date": "2025-07-09",
+    "processing_stage": "gold"
+  }
+}
